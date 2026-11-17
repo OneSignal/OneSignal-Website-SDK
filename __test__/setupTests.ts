@@ -47,11 +47,12 @@ Object.defineProperty(global, 'location', {
 
 // in case we want to await operations with real timers
 vi.mock('src/core/operationRepo/constants', () => ({
-  OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF: 10,
+  OP_REPO_BASE_FAIL_RETRY_BACKOFF: 10,
+  OP_REPO_MAX_FAIL_RETRY_BACKOFF: 40,
+  OP_REPO_MAX_RETRY_AFTER: 3_600_000,
   OP_REPO_POST_CREATE_DELAY: 10,
   OP_REPO_EXECUTION_INTERVAL: 10,
   OP_REPO_POST_CREATE_RETRY_UP_TO: 20,
-  RETRY_MS: 10,
 }));
 
 Object.defineProperty(navigator, 'locks', { value: createFakeLocks(), configurable: true });

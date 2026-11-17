@@ -22,7 +22,8 @@ import { sendOutcome } from './shared';
 export async function downloadSWServerAppConfig(appId: string): Promise<ServerAppConfig> {
   enforceAppId(appId);
   const response = await OneSignalApiBase.get<ServerAppConfig>(['sync', appId, 'web'], null);
-  return response?.result;
+  if (!response.ok) throw new Error(`App config request failed: ${response.status}`);
+  return response.result;
 }
 
 /**

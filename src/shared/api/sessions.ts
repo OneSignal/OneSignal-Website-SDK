@@ -34,14 +34,13 @@ interface CreateSessionResponse {
   data?: { session_id?: unknown };
 }
 
-// Single attempt: the queue owns retry and backoff.
 export function createSession(
   appId: string,
   request: CreateSessionRequest,
 ): Promise<SessionsApiResult<string>> {
   return send(
     () =>
-      OneSignalApiBase.callOnce<CreateSessionResponse>('POST', ['apps', appId, 'sessions'], {
+      OneSignalApiBase.post<CreateSessionResponse>(['apps', appId, 'sessions'], {
         onesignal_id: request.onesignalId,
         subscription_id: request.subscriptionId,
         subscription_type: request.subscriptionType,
@@ -72,7 +71,7 @@ export function updateSession(
 ): Promise<SessionsApiResult> {
   return send(
     () =>
-      OneSignalApiBase.callOnce('PATCH', ['apps', appId, 'sessions', sessionId], {
+      OneSignalApiBase.patch(['apps', appId, 'sessions', sessionId], {
         onesignal_id: request.onesignalId,
         subscription_id: request.subscriptionId,
         duration_seconds: request.durationSeconds,
@@ -86,7 +85,7 @@ export function updateSession(
 
 async function send<R, T>(
   request: () => Promise<OneSignalApiBaseResponse<R>>,
-  onSuccess: (response: OneSignalApiBaseResponse<R>) => SessionsApiResult<T>,
+  onSuccess: (response: OneSignalApiBaseResponse<R> & { ok: true }) => SessionsApiResult<T>,
 ): Promise<SessionsApiResult<T>> {
   let response: OneSignalApiBaseResponse<R>;
   try {
@@ -98,8 +97,8 @@ async function send<R, T>(
     return { kind: 'retry' };
   }
 
-  const { ok, status, retryAfterSeconds } = response;
-  if (ok) return onSuccess(response);
+  if (response.ok) return onSuccess(response);
+  const { status, retryAfterSeconds } = response;
   if (status === 408 || status === 429 || status >= 500) {
     return { kind: 'retry', status, retryAfterSeconds };
   }

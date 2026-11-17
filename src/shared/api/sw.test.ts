@@ -11,4 +11,9 @@ describe('OneSignalApiSW', () => {
     const appConfig = await OneSignalApiSW.downloadSWServerAppConfig(APP_ID);
     expect(appConfig).toBeDefined();
   });
+
+  test('downloadServerAppConfig rejects a failed response', async () => {
+    nock({ errors: ['app not found'] }, 400);
+    await expect(OneSignalApiSW.downloadSWServerAppConfig(APP_ID)).rejects.toThrow();
+  });
 });

@@ -18,8 +18,12 @@ describe('OneSignalApiShared', () => {
     expect(LogErrorSpy).not.toHaveBeenCalled();
   });
 
-  test('can handle send outcome error', async () => {
-    server.use(http.post('**/outcomes/measure', () => HttpResponse.text('')));
+  test.each([
+    ['an error status', () => HttpResponse.text('<html>Bad Request</html>', { status: 400 })],
+    ['no response', () => HttpResponse.error()],
+  ])('logs a send outcome error on %s', async (_, response) => {
+    LogErrorSpy.mockClear();
+    server.use(http.post('**/outcomes/measure', response));
 
     await OneSignalApiShared.sendOutcome({
       app_id: APP_ID,

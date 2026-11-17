@@ -24,8 +24,10 @@ import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOpe
 import { LoginUserOperation } from '../operations/LoginUserOperation';
 import { GroupComparisonType, type Operation } from '../operations/Operation';
 import {
-  OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF,
+  OP_REPO_BASE_FAIL_RETRY_BACKOFF,
   OP_REPO_EXECUTION_INTERVAL,
+  OP_REPO_MAX_FAIL_RETRY_BACKOFF,
+  OP_REPO_MAX_RETRY_AFTER,
   OP_REPO_POST_CREATE_DELAY,
 } from './constants';
 import { type NewRecordsState } from './NewRecordsState';
@@ -561,9 +563,16 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     retryAfterSeconds?: number,
   ): Promise<void> {
     Log._debug(`retryAfterSeconds: ${retryAfterSeconds}`);
-    const retryAfterSecondsMs = (retryAfterSeconds || 0) * 1000;
-    const delayForOnRetries = retries * OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF;
-    const delayFor = Math.max(delayForOnRetries, retryAfterSecondsMs);
+    const retryAfterMs = Math.min((retryAfterSeconds || 0) * 1000, OP_REPO_MAX_RETRY_AFTER);
+    // Jitter spreads retries from many browsers after a shared outage.
+    const backoffMs = retries
+      ? Math.min(
+          OP_REPO_BASE_FAIL_RETRY_BACKOFF * 2 ** (retries - 1),
+          OP_REPO_MAX_FAIL_RETRY_BACKOFF,
+        ) *
+        (0.5 + Math.random() / 2)
+      : 0;
+    const delayFor = Math.floor(Math.max(backoffMs, retryAfterMs));
 
     if (delayFor < 1) return;
 
