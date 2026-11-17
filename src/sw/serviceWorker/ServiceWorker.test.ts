@@ -37,6 +37,7 @@ import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategy
 import { ONESIGNAL_SESSION_KEY, SessionOrigin, SessionStatus } from 'src/shared/session/constants';
 import type { Session, UpsertOrDeactivateSessionPayload } from 'src/shared/session/types';
 import { NotificationType, SubscriptionType } from 'src/shared/subscriptions/constants';
+import { enqueueSessionUpdate } from 'src/sw/sessionRequests/queue';
 import { drainSessionRequests } from 'src/sw/sessionRequests/sender';
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
@@ -1231,7 +1232,11 @@ describe('ServiceWorker', () => {
 
           const current = (await getCurrentSession())!;
           const byOrder = (await queued()).sort((a, b) => a.order - b.order);
-          expect(byOrder.map((r) => r.sessionId)).toEqual(['local-started', current.sessionId]);
+          expect(byOrder.map((r) => [r.kind, r.sessionId])).toEqual([
+            ['create', 'local-started'],
+            ['update', 'local-started'],
+            ['create', current.sessionId],
+          ]);
         });
 
         test('a payload without a subscription type enqueues no create', async () => {
@@ -1256,6 +1261,168 @@ describe('ServiceWorker', () => {
 
           expect(updateUserFn).toHaveBeenCalledWith(
             expect.objectContaining({ deltas: { session_count: 1 } }),
+          );
+        });
+      });
+
+      describe('sessions API end', () => {
+        const queued = async () =>
+          (await db.getAll('SessionRequests')).sort((a, b) => a.order - b.order);
+        const deactivatedAt = Date.now() - 60_000;
+        const apiSession = (overrides: Partial<Session> = {}): Session => ({
+          ...session,
+          status: SessionStatus._Inactive,
+          lastDeactivatedTimestamp: deactivatedAt,
+          accumulatedDuration: 42,
+          sessionId: 'ending-session',
+          usesSessionsApi: true,
+          onesignalId: 'started-user',
+          subscriptionId: 'started-subscription',
+          ...overrides,
+        });
+        const deactivate = (payload: Partial<UpsertOrDeactivateSessionPayload> = {}) => {
+          matchAllFn.mockResolvedValueOnce([unfocusedClient]);
+          return dispatchEvent(
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionDeactivate,
+              payload: {
+                ...baseMessagePayload,
+                isSafari: false,
+                ...payload,
+              } satisfies UpsertOrDeactivateSessionPayload,
+            }),
+          );
+        };
+
+        beforeEach(() => {
+          setUpdateUserResponse();
+          getHandler({ uri: '**/outcomes/measure', method: 'post', status: 200 });
+          vi.mocked(drainSessionRequests).mockClear();
+        });
+
+        test('enqueues an end at the deactivate time with the final duration and pinned ids, then drains', async () => {
+          await db.put('Sessions', apiSession());
+
+          await deactivate();
+
+          expect(await queued()).toEqual([
+            expect.objectContaining({
+              kind: 'update',
+              appId,
+              sessionId: 'ending-session',
+              onesignalId: 'started-user',
+              subscriptionId: 'started-subscription',
+              durationSeconds: 42,
+              endTime: deactivatedAt,
+            }),
+          ]);
+          expect(drainSessionRequests).toHaveBeenCalled();
+          expect(await getCurrentSession()).toBeNull();
+          // The legacy duration is still sent.
+          expect(updateUserFn).toHaveBeenCalledWith(
+            expect.objectContaining({ deltas: { session_time: 42 } }),
+          );
+        });
+
+        test('replaces an unsent update and keeps the highest duration', async () => {
+          await db.put('Sessions', apiSession());
+          await enqueueSessionUpdate({
+            appId,
+            sessionId: 'ending-session',
+            onesignalId: 'started-user',
+            subscriptionId: 'started-subscription',
+            durationSeconds: 30,
+          });
+
+          await deactivate();
+
+          expect(await queued()).toEqual([
+            expect.objectContaining({ durationSeconds: 42, endTime: deactivatedAt }),
+          ]);
+        });
+
+        test('an expired session found on upsert ends before the next session is created', async () => {
+          await db.put('Options', {
+            key: 'featureFlags',
+            value: JSON.stringify([FeatureFlag._SessionsV2ApiCutover]),
+          });
+          await db.put('Sessions', apiSession());
+
+          await upsertSession({ ...baseMessagePayload, isSafari: false, sessionThreshold: 30 });
+          await db.delete('Options', 'featureFlags');
+
+          const current = (await getCurrentSession())!;
+          expect((await queued()).map((r) => [r.kind, r.sessionId])).toEqual([
+            ['update', 'ending-session'],
+            ['create', current.sessionId],
+          ]);
+          expect((await queued())[0]).toMatchObject({ endTime: deactivatedAt });
+        });
+
+        test('an expired session found on upsert drains only after the next session is saved', async () => {
+          await db.put('Sessions', apiSession());
+          const sessionsAtDrain: (string | undefined)[] = [];
+          vi.mocked(drainSessionRequests).mockImplementationOnce(async () => {
+            sessionsAtDrain.push((await getCurrentSession())?.sessionId);
+          });
+
+          await upsertSession({ ...baseMessagePayload, isSafari: false, sessionThreshold: 30 });
+
+          const current = (await getCurrentSession())!;
+          expect(sessionsAtDrain.length).toBeGreaterThan(0);
+          expect(sessionsAtDrain.every((id) => id === current.sessionId)).toBe(true);
+        });
+
+        test('an active session ends at the deactivate time with the duration it adds', async () => {
+          const activatedAt = Date.now() - 5_000;
+          await db.put(
+            'Sessions',
+            apiSession({
+              status: SessionStatus._Active,
+              lastActivatedTimestamp: activatedAt,
+              lastDeactivatedTimestamp: null,
+            }),
+          );
+
+          const putSpy = vi.spyOn(db, 'put');
+
+          await deactivate();
+
+          const deactivated = putSpy.mock.calls
+            .map(([, value]) => value as Session)
+            .find((value) => value.status === SessionStatus._Inactive)!;
+          expect(deactivated.lastDeactivatedTimestamp).toBeGreaterThanOrEqual(activatedAt + 5_000);
+          expect(deactivated.accumulatedDuration).toBeGreaterThanOrEqual(42 + 5);
+          expect(await queued()).toEqual([
+            expect.objectContaining({
+              kind: 'update',
+              sessionId: 'ending-session',
+              endTime: deactivated.lastDeactivatedTimestamp,
+              durationSeconds: deactivated.accumulatedDuration,
+            }),
+          ]);
+          expect(drainSessionRequests).toHaveBeenCalled();
+        });
+
+        test.each<[string, Partial<Session>, Partial<UpsertOrDeactivateSessionPayload>]>([
+          ['a legacy session', { usesSessionsApi: false }, {}],
+          [
+            'a session stored by an older SDK',
+            { usesSessionsApi: undefined, sessionId: undefined },
+            {},
+          ],
+          ['a session that still has local ids', { onesignalId: 'local-user' }, {}],
+          ['a page that sends no subscription type', {}, { subscriptionType: undefined }],
+        ])('%s enqueues no end', async (_, overrides, payload) => {
+          await db.put('Sessions', apiSession(overrides));
+
+          await deactivate(payload);
+
+          expect(await queued()).toEqual([]);
+          expect(drainSessionRequests).not.toHaveBeenCalled();
+          expect(await getCurrentSession()).toBeNull();
+          expect(updateUserFn).toHaveBeenCalledWith(
+            expect.objectContaining({ deltas: { session_time: 42 } }),
           );
         });
       });
