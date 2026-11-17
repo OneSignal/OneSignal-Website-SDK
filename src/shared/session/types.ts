@@ -33,7 +33,11 @@ export interface Session {
    * feature flag once at start, so a session never mixes paths.
    */
   usesSessionsApi?: boolean;
-  /** The user and push subscription the session started with; kept after a login. */
+  /**
+   * The user and push subscription the session started with; kept after a login.
+   * Local IDs are replaced by the first upsert that brings server IDs, which
+   * can be a user who logged in after the session started.
+   */
   onesignalId?: string;
   subscriptionId?: string;
 }

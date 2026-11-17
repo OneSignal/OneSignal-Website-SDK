@@ -1173,6 +1173,69 @@ describe('ServiceWorker', () => {
           },
         );
 
+        const localSession = (overrides: Partial<Session> = {}): Session => ({
+          ...session,
+          sessionId: 'local-started',
+          usesSessionsApi: true,
+          onesignalId: 'local-user',
+          subscriptionId: 'local-subscription',
+          ...overrides,
+        });
+
+        test('a deferred create that cannot be queued keeps the local ids and is retried', async () => {
+          await enableSessionsApi();
+          await db.put('Sessions', localSession());
+
+          await upsert({ subscriptionType: undefined });
+          expect(await getCurrentSession()).toMatchObject({ onesignalId: 'local-user' });
+          expect(await queued()).toEqual([]);
+
+          await upsert();
+          expect(await queued()).toEqual([
+            expect.objectContaining({ kind: 'create', sessionId: 'local-started' }),
+          ]);
+        });
+
+        test('a deferred create drains only after the session is resumed', async () => {
+          await enableSessionsApi();
+          await db.put(
+            'Sessions',
+            localSession({
+              status: SessionStatus._Inactive,
+              lastDeactivatedTimestamp: Date.now() - 1_000,
+            }),
+          );
+          let statusAtDrain: string | undefined;
+          vi.mocked(drainSessionRequests).mockImplementationOnce(async () => {
+            statusAtDrain = (await getCurrentSession())?.status;
+          });
+
+          await upsert({ sessionThreshold: 30 });
+
+          expect(statusAtDrain).toBe(SessionStatus._Active);
+          expect((await getCurrentSession())?.sessionId).toBe('local-started');
+        });
+
+        test('an expired session started with local ids still gets its create', async () => {
+          getHandler({ uri: '**/outcomes/measure', method: 'post', status: 200 });
+          await enableSessionsApi();
+          await db.put(
+            'Sessions',
+            localSession({
+              status: SessionStatus._Inactive,
+              lastDeactivatedTimestamp: Date.now() - 60_000,
+            }),
+          );
+
+          await upsert({ sessionThreshold: 30 });
+
+          const current = (await getCurrentSession())!;
+          expect((await queued()).map((r) => r.sessionId)).toEqual([
+            'local-started',
+            current.sessionId,
+          ]);
+        });
+
         test('a payload without a subscription type enqueues no create', async () => {
           await enableSessionsApi();
 

@@ -41,7 +41,7 @@ function appendServiceWorkerParams(
 }
 
 export async function upsertSession(options: UpsertOrDeactivateSessionPayload): Promise<void> {
-  const { appId, sessionThreshold: sessionThresholdInSeconds } = options;
+  const { appId } = options;
   const existingSession = await getCurrentSession();
 
   if (!existingSession) {
@@ -59,7 +59,16 @@ export async function upsertSession(options: UpsertOrDeactivateSessionPayload): 
     return;
   }
 
-  await createDeferredServerSession(options, existingSession);
+  const deferredCreate = await enqueueDeferredCreate(options, existingSession);
+  await continueOrRestartSession(options, existingSession);
+  if (deferredCreate) await drainSessionRequests();
+}
+
+async function continueOrRestartSession(
+  options: UpsertOrDeactivateSessionPayload,
+  existingSession: Session,
+): Promise<void> {
+  const { sessionThreshold: sessionThresholdInSeconds } = options;
 
   if (existingSession.status === SessionStatus._Active) {
     if (existingSession.onSessionPendingFor) {
@@ -125,28 +134,37 @@ async function reportSessionStart(user: SessionUser, session: NewSession): Promi
 
 /**
  * A new subscriber's first session starts before the user and subscription
- * exist, so its create waits for an upsert that brings the server IDs.
+ * exist, so its create waits for an upsert that brings the server IDs. The IDs
+ * are re-pinned only once the create is queued, so a later upsert retries it.
  */
-async function createDeferredServerSession(user: SessionUser, session: Session): Promise<void> {
-  const { sessionId, usesSessionsApi, onesignalId, subscriptionId } = session;
-  if (!usesSessionsApi || !sessionId || !hasLocalId(onesignalId, subscriptionId)) return;
-  if (hasLocalId(user.onesignalId, user.subscriptionId)) return;
+async function enqueueDeferredCreate(user: SessionUser, session: Session): Promise<boolean> {
+  const { sessionId, usesSessionsApi, onesignalId, subscriptionId, startTimestamp } = session;
+  if (!usesSessionsApi || !sessionId || !hasLocalId(onesignalId, subscriptionId)) return false;
+  if (!(await enqueueCreate(user, sessionId, startTimestamp))) return false;
 
   session.onesignalId = user.onesignalId;
   session.subscriptionId = user.subscriptionId;
   await db.put('Sessions', session);
-  await createServerSession(user, sessionId, session.startTimestamp);
+  return true;
 }
 
 async function createServerSession(
-  { appId, onesignalId, subscriptionId, subscriptionType }: SessionUser,
+  user: SessionUser,
   sessionId: string,
   startTime: number,
 ): Promise<void> {
+  if (await enqueueCreate(user, sessionId, startTime)) await drainSessionRequests();
+}
+
+async function enqueueCreate(
+  { appId, onesignalId, subscriptionId, subscriptionType }: SessionUser,
+  sessionId: string,
+  startTime: number,
+): Promise<boolean> {
   // Queued records are never rewritten, so a create with a local ID could never send.
   if (!subscriptionType || hasLocalId(onesignalId, subscriptionId)) {
     Log._debug('Sessions API: create waits for server ids and subscription type');
-    return;
+    return false;
   }
   try {
     await enqueueSessionCreate({
@@ -157,9 +175,10 @@ async function createServerSession(
       subscriptionType,
       startTime,
     });
-    await drainSessionRequests();
+    return true;
   } catch (e) {
     Log._error('Sessions API: enqueue failed', e);
+    return false;
   }
 }
 
