@@ -40,6 +40,8 @@ export interface Session {
    */
   onesignalId?: string;
   subscriptionId?: string;
+  /** The duration of the last background checkpoint queued for this session. */
+  checkpointedDuration?: number;
 }
 
 interface BaseSessionPayload {

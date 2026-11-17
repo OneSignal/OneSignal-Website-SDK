@@ -242,9 +242,28 @@ export async function deactivateSession(
 
   const cancelableFinalize = cancelableTimeout(finalizeSWSession, thresholdInSeconds);
 
+  const checkpointQueued = await enqueueCheckpoint(options, existingSession);
   await db.put('Sessions', existingSession);
+  // Not awaited: the caller keeps the finalize timer only once this returns,
+  // and an upsert in the meantime could not cancel it.
+  if (checkpointQueued) void drainSessionRequests();
 
   return cancelableFinalize;
+}
+
+/**
+ * Sends the duration so far without ending the session, so a browser closed
+ * in the background still leaves it on the server. Only the active to inactive
+ * transition gets here, which the worker reaches once for all tabs.
+ */
+async function enqueueCheckpoint(
+  options: UpsertOrDeactivateSessionPayload,
+  session: Session,
+): Promise<boolean> {
+  if (session.accumulatedDuration <= (session.checkpointedDuration ?? 0)) return false;
+  if (!(await enqueueDurationUpdate(options, session))) return false;
+  session.checkpointedDuration = session.accumulatedDuration;
+  return true;
 }
 
 async function sendOnSessionCall(user: SessionUser, session: Session) {
@@ -290,7 +309,12 @@ async function finalizeSession(
 ): Promise<boolean> {
   const { enableSessionDuration: sendOnFocusEnabled, outcomesConfig } = options;
   Log._debug('Finalize session', `duration: ${session.accumulatedDuration}s`);
-  const endQueued = await enqueueSessionEnd(options, session);
+  // Ends at the moment the last tab went hidden, not when the threshold expired.
+  const endQueued = await enqueueDurationUpdate(
+    options,
+    session,
+    session.lastDeactivatedTimestamp ?? Date.now(),
+  );
   if (sendOnFocusEnabled) {
     Log._debug(`on_focus duration: ${session.accumulatedDuration}s`);
     const attribution = await getConfigAttribution(outcomesConfig);
@@ -304,14 +328,14 @@ async function finalizeSession(
 }
 
 /**
- * Ends the session at the moment the last tab went hidden, not when the
- * threshold expired. Its create was queued with the pinned IDs, so the end
- * uses them too. It is skipped when the create could not have been queued:
- * IDs still local, or a page that sends no subscription type.
+ * The session's create was queued with the pinned IDs, so its updates use them
+ * too. Skipped when the create could not have been queued: IDs still local, or
+ * a page that sends no subscription type.
  */
-async function enqueueSessionEnd(
+async function enqueueDurationUpdate(
   { subscriptionType }: UpsertOrDeactivateSessionPayload,
   session: Session,
+  endTime?: number,
 ): Promise<boolean> {
   const { appId, sessionId, usesSessionsApi, onesignalId, subscriptionId } = session;
   if (!usesSessionsApi || !sessionId) return false;
@@ -321,7 +345,7 @@ async function enqueueSessionEnd(
     !subscriptionId ||
     hasLocalId(onesignalId, subscriptionId)
   ) {
-    Log._debug('Sessions API: end skipped, no create was queued');
+    Log._debug('Sessions API: update skipped, no create was queued');
     return false;
   }
   return tryEnqueue(() =>
@@ -331,7 +355,7 @@ async function enqueueSessionEnd(
       onesignalId,
       subscriptionId,
       durationSeconds: session.accumulatedDuration,
-      endTime: session.lastDeactivatedTimestamp ?? Date.now(),
+      endTime,
     }),
   );
 }

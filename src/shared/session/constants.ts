@@ -10,7 +10,7 @@ export const SessionOrigin = {
   _UserNewSession: 2,
   _VisibilityVisible: 3,
   _VisibilityHidden: 4,
-  _BeforeUnload: 5,
+  _PageHide: 5,
   _Focus: 7,
   _Blur: 8,
   _JwtUpdated: 9,
