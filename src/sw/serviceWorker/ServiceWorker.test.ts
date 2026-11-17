@@ -36,7 +36,7 @@ import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
 import { ONESIGNAL_SESSION_KEY, SessionOrigin, SessionStatus } from 'src/shared/session/constants';
 import type { Session, UpsertOrDeactivateSessionPayload } from 'src/shared/session/types';
-import { NotificationType } from 'src/shared/subscriptions/constants';
+import { NotificationType, SubscriptionType } from 'src/shared/subscriptions/constants';
 import { drainSessionRequests } from 'src/sw/sessionRequests/sender';
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
@@ -829,6 +829,7 @@ describe('ServiceWorker', () => {
       sessionOrigin: SessionOrigin._UserCreate,
       sessionThreshold: 1,
       subscriptionId: SUB_ID,
+      subscriptionType: SubscriptionType._ChromePush,
     };
 
     const session: Session = {
@@ -1037,6 +1038,225 @@ describe('ServiceWorker', () => {
           const current = (await getCurrentSession())!;
           expect(current.usesSessionsApi).toBeUndefined();
           expect(current.sessionId).toBeUndefined();
+        });
+      });
+
+      describe('sessions API start', () => {
+        const enableSessionsApi = () =>
+          db.put('Options', {
+            key: 'featureFlags',
+            value: JSON.stringify([FeatureFlag._SessionsV2ApiCutover]),
+          });
+        const upsert = (user: Partial<UpsertOrDeactivateSessionPayload> = {}) =>
+          upsertSession({ ...baseMessagePayload, isSafari: false, ...user });
+        const queued = () => db.getAll('SessionRequests');
+
+        beforeEach(() => {
+          setUpdateUserResponse();
+          vi.mocked(drainSessionRequests).mockClear();
+        });
+
+        afterEach(async () => {
+          await db.delete('Options', 'featureFlags');
+        });
+
+        test('a new session enqueues a create with its start time and pinned IDs, then drains', async () => {
+          await enableSessionsApi();
+
+          await upsert({ subscriptionType: SubscriptionType._SafariLegacyPush });
+
+          const current = (await getCurrentSession())!;
+          expect(await queued()).toEqual([
+            expect.objectContaining({
+              kind: 'create',
+              appId,
+              sessionId: current.sessionId,
+              onesignalId: ONESIGNAL_ID,
+              subscriptionId: SUB_ID,
+              subscriptionType: SubscriptionType._SafariLegacyPush,
+              startTime: current.startTimestamp,
+              idempotencyKey: expect.stringMatching(/^[0-9a-f-]{36}$/),
+            }),
+          ]);
+          expect(drainSessionRequests).toHaveBeenCalled();
+          // The legacy start is still sent.
+          expect(updateUserFn).toHaveBeenCalledWith(
+            expect.objectContaining({ deltas: { session_count: 1 } }),
+          );
+        });
+
+        test('upserts from other tabs during the session enqueue no second create', async () => {
+          await enableSessionsApi();
+
+          await upsert();
+          await upsert();
+          await upsert({ sessionOrigin: SessionOrigin._Focus });
+
+          expect(await queued()).toHaveLength(1);
+        });
+
+        test('resuming within the threshold enqueues no create', async () => {
+          await enableSessionsApi();
+          await db.put('Sessions', {
+            ...session,
+            status: SessionStatus._Inactive,
+            lastDeactivatedTimestamp: Date.now() - 1_000,
+            sessionId: 'resumed-session',
+            usesSessionsApi: true,
+          });
+
+          await upsert({ sessionThreshold: 30 });
+
+          expect((await getCurrentSession())?.sessionId).toBe('resumed-session');
+          expect(await queued()).toEqual([]);
+        });
+
+        test('a session after the threshold enqueues a create for the new session', async () => {
+          getHandler({ uri: '**/outcomes/measure', method: 'post', status: 200 });
+          await enableSessionsApi();
+          await db.put('Sessions', {
+            ...session,
+            status: SessionStatus._Inactive,
+            lastDeactivatedTimestamp: Date.now() - 60_000,
+            sessionId: 'previous-session',
+            usesSessionsApi: true,
+          });
+
+          await upsert({ sessionThreshold: 30 });
+
+          const current = (await getCurrentSession())!;
+          expect(current.sessionId).not.toBe('previous-session');
+          expect(await queued()).toEqual([
+            expect.objectContaining({ kind: 'create', sessionId: current.sessionId }),
+          ]);
+        });
+
+        test('flag off: no create', async () => {
+          await upsert();
+
+          expect(await queued()).toEqual([]);
+          expect(drainSessionRequests).not.toHaveBeenCalled();
+          expect(updateUserFn).toHaveBeenCalledWith(
+            expect.objectContaining({ deltas: { session_count: 1 } }),
+          );
+        });
+
+        test.each([
+          ['onesignal', { onesignalId: 'local-user' }],
+          ['subscription', { subscriptionId: 'local-subscription' }],
+        ])(
+          'a session started with a local %s id enqueues its create on the next upsert with server ids',
+          async (_, localIds) => {
+            await enableSessionsApi();
+
+            await upsert(localIds);
+            expect(await queued()).toEqual([]);
+            await upsert(localIds);
+            expect(await queued()).toEqual([]);
+
+            await upsert({ sessionOrigin: SessionOrigin._Focus });
+
+            const current = (await getCurrentSession())!;
+            expect(current).toMatchObject({ onesignalId: ONESIGNAL_ID, subscriptionId: SUB_ID });
+            expect(await queued()).toEqual([
+              expect.objectContaining({
+                kind: 'create',
+                sessionId: current.sessionId,
+                onesignalId: ONESIGNAL_ID,
+                subscriptionId: SUB_ID,
+                startTime: current.startTimestamp,
+              }),
+            ]);
+
+            await upsert();
+            expect(await queued()).toHaveLength(1);
+          },
+        );
+
+        const localSession = (overrides: Partial<Session> = {}): Session => ({
+          ...session,
+          sessionId: 'local-started',
+          usesSessionsApi: true,
+          onesignalId: 'local-user',
+          subscriptionId: 'local-subscription',
+          ...overrides,
+        });
+
+        test('a deferred create that cannot be queued keeps the local ids and is retried', async () => {
+          await enableSessionsApi();
+          await db.put('Sessions', localSession());
+
+          await upsert({ subscriptionType: undefined });
+          expect(await getCurrentSession()).toMatchObject({ onesignalId: 'local-user' });
+          expect(await queued()).toEqual([]);
+
+          await upsert();
+          expect(await queued()).toEqual([
+            expect.objectContaining({ kind: 'create', sessionId: 'local-started' }),
+          ]);
+        });
+
+        test('a deferred create drains only after the session is resumed', async () => {
+          await enableSessionsApi();
+          await db.put(
+            'Sessions',
+            localSession({
+              status: SessionStatus._Inactive,
+              lastDeactivatedTimestamp: Date.now() - 1_000,
+            }),
+          );
+          let statusAtDrain: string | undefined;
+          vi.mocked(drainSessionRequests).mockImplementationOnce(async () => {
+            statusAtDrain = (await getCurrentSession())?.status;
+          });
+
+          await upsert({ sessionThreshold: 30 });
+
+          expect(statusAtDrain).toBe(SessionStatus._Active);
+          expect((await getCurrentSession())?.sessionId).toBe('local-started');
+        });
+
+        test('an expired session started with local ids still gets its create', async () => {
+          getHandler({ uri: '**/outcomes/measure', method: 'post', status: 200 });
+          await enableSessionsApi();
+          await db.put(
+            'Sessions',
+            localSession({
+              status: SessionStatus._Inactive,
+              lastDeactivatedTimestamp: Date.now() - 60_000,
+            }),
+          );
+
+          await upsert({ sessionThreshold: 30 });
+
+          const current = (await getCurrentSession())!;
+          const byOrder = (await queued()).sort((a, b) => a.order - b.order);
+          expect(byOrder.map((r) => r.sessionId)).toEqual(['local-started', current.sessionId]);
+        });
+
+        test('a payload without a subscription type enqueues no create', async () => {
+          await enableSessionsApi();
+
+          await upsert({ subscriptionType: undefined });
+
+          expect(await queued()).toEqual([]);
+          expect(updateUserFn).toHaveBeenCalledWith(
+            expect.objectContaining({ deltas: { session_count: 1 } }),
+          );
+        });
+
+        test('a queue failure still sends the legacy session start', async () => {
+          vi.spyOn(Log, '_error').mockImplementation(() => {});
+          vi.spyOn(navigator.locks, 'request').mockImplementationOnce(() => {
+            throw new TypeError('locks unavailable');
+          });
+          await enableSessionsApi();
+
+          await upsert();
+
+          expect(updateUserFn).toHaveBeenCalledWith(
+            expect.objectContaining({ deltas: { session_count: 1 } }),
+          );
         });
       });
 

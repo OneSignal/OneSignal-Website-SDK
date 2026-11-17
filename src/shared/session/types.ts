@@ -1,4 +1,5 @@
 import type { OutcomesConfig } from '../outcomes/types';
+import type { SubscriptionTypeValue } from '../subscriptions/types';
 import type { SessionOrigin, SessionStatus } from './constants';
 
 export type SessionStatusValue = (typeof SessionStatus)[keyof typeof SessionStatus];
@@ -32,7 +33,11 @@ export interface Session {
    * feature flag once at start, so a session never mixes paths.
    */
   usesSessionsApi?: boolean;
-  /** The user and push subscription the session started with; kept after a login. */
+  /**
+   * The user and push subscription the session started with; kept after a login.
+   * Local IDs are replaced by the first upsert that brings server IDs, which
+   * can be a user who logged in after the session started.
+   */
   onesignalId?: string;
   subscriptionId?: string;
 }
@@ -55,6 +60,8 @@ export interface SessionUser {
   appId: string;
   onesignalId: string;
   subscriptionId: string;
+  /** Unset when sent by an older page SDK. */
+  subscriptionType?: SubscriptionTypeValue;
   jwtRequired?: boolean;
   externalId?: string;
   jwt?: string;
