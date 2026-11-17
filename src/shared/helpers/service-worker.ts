@@ -13,7 +13,7 @@ import Log from '../libraries/Log';
 import { IDManager } from '../managers/IDManager';
 import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
-import { SessionStatus } from '../session/constants';
+import { SessionOrigin, SessionStatus } from '../session/constants';
 import { initializeNewSession } from '../session/helpers';
 import type { Session, SessionUser, UpsertOrDeactivateSessionPayload } from '../session/types';
 import { getBaseUrl } from './general';
@@ -208,8 +208,18 @@ export async function deactivateSession(
 
   // The finalize step reuses this payload after the threshold, so a token the
   // page refreshes in that window is not used for the session_time request.
+  // The caller stores this timer's cancel only once deactivate returns, so an
+  // upsert that arrives meanwhile cannot cancel it. The stored row is the truth.
   const finalizeSWSession = async () => {
-    if (await finalizeSession(options, existingSession)) await drainSessionRequests();
+    const current = await getCurrentSession();
+    if (
+      current?.status !== SessionStatus._Inactive ||
+      current.startTimestamp !== existingSession.startTimestamp
+    ) {
+      Log._debug('Finalize skipped, session resumed or replaced');
+      return;
+    }
+    if (await finalizeSession(options, current)) await drainSessionRequests();
   };
 
   /**
@@ -218,6 +228,11 @@ export async function deactivateSession(
    * No update needed for the session, early return.
    */
   if (existingSession.status === SessionStatus._Inactive) {
+    // A blur made the session inactive without a checkpoint; the tab hiding later does.
+    if (await enqueueCheckpoint(options, existingSession)) {
+      await db.put('Sessions', existingSession);
+      void drainSessionRequests();
+    }
     return cancelableTimeout(finalizeSWSession, thresholdInSeconds);
   }
 
@@ -240,26 +255,31 @@ export async function deactivateSession(
   existingSession.accumulatedDuration += timeSinceLastActivatedInSeconds;
   existingSession.status = SessionStatus._Inactive;
 
-  const cancelableFinalize = cancelableTimeout(finalizeSWSession, thresholdInSeconds);
-
   const checkpointQueued = await enqueueCheckpoint(options, existingSession);
   await db.put('Sessions', existingSession);
-  // Not awaited: the caller keeps the finalize timer only once this returns,
-  // and an upsert in the meantime could not cancel it.
+  // Not awaited, so the caller gets the finalize timer without waiting on the network.
   if (checkpointQueued) void drainSessionRequests();
 
-  return cancelableFinalize;
+  // Started once the row is inactive, since finalize skips a row that is not.
+  return cancelableTimeout(finalizeSWSession, thresholdInSeconds);
 }
 
 /**
  * Sends the duration so far without ending the session, so a browser closed
- * in the background still leaves it on the server. Only the active to inactive
- * transition gets here, which the worker reaches once for all tabs.
+ * in the background still leaves it on the server. The worker deactivates only
+ * once no tab has focus, so this runs once for all tabs. A blur alone sends
+ * nothing: switching to another app would send one per switch.
  */
 async function enqueueCheckpoint(
   options: UpsertOrDeactivateSessionPayload,
   session: Session,
 ): Promise<boolean> {
+  const { sessionOrigin } = options;
+  if (
+    sessionOrigin !== SessionOrigin._VisibilityHidden &&
+    sessionOrigin !== SessionOrigin._PageHide
+  )
+    return false;
   if (session.accumulatedDuration <= (session.checkpointedDuration ?? 0)) return false;
   if (!(await enqueueDurationUpdate(options, session))) return false;
   session.checkpointedDuration = session.accumulatedDuration;

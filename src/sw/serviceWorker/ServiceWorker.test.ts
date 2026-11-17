@@ -1325,6 +1325,35 @@ describe('ServiceWorker', () => {
           );
         });
 
+        test('a session resumed before the threshold is not ended by the pending finalize', async () => {
+          await db.put(
+            'Sessions',
+            apiSession({
+              status: SessionStatus._Active,
+              lastActivatedTimestamp: Date.now() - 5_000,
+              lastDeactivatedTimestamp: null,
+            }),
+          );
+          let finalize: (() => Promise<void>) | undefined;
+          vi.mocked(cancelableTimeout).mockImplementationOnce((callback) => {
+            finalize = callback;
+            return { promise: Promise.resolve(), cancel: vi.fn() };
+          });
+
+          await deactivateSession({ ...baseMessagePayload, isSafari: false });
+          await upsertSession({ ...baseMessagePayload, isSafari: false, sessionThreshold: 30 });
+          await finalize!();
+
+          expect((await getCurrentSession())!).toMatchObject({
+            sessionId: 'ending-session',
+            status: SessionStatus._Active,
+          });
+          expect((await queued()).filter((r) => r.kind === 'update' && r.endTime)).toEqual([]);
+          expect(updateUserFn).not.toHaveBeenCalledWith(
+            expect.objectContaining({ deltas: { session_time: expect.anything() } }),
+          );
+        });
+
         test('replaces an unsent update and keeps the highest duration', async () => {
           await db.put('Sessions', apiSession());
           await enqueueSessionUpdate({
@@ -1447,7 +1476,12 @@ describe('ServiceWorker', () => {
             promise: new Promise(() => {}),
             cancel: vi.fn(),
           });
-          return deactivateSession({ ...baseMessagePayload, isSafari: false, ...payload });
+          return deactivateSession({
+            ...baseMessagePayload,
+            isSafari: false,
+            sessionOrigin: SessionOrigin._VisibilityHidden,
+            ...payload,
+          });
         };
 
         beforeEach(() => {
@@ -1483,6 +1517,35 @@ describe('ServiceWorker', () => {
           await deactivate();
 
           expect(await queued()).toHaveLength(1);
+        });
+
+        test('a tab close enqueues a checkpoint', async () => {
+          await db.put('Sessions', activeSession());
+
+          await deactivate({ sessionOrigin: SessionOrigin._PageHide });
+
+          expect(await queued()).toEqual([expect.objectContaining({ kind: 'update' })]);
+        });
+
+        test('a blur enqueues nothing, and the tab hiding later enqueues the checkpoint', async () => {
+          await db.put('Sessions', activeSession());
+
+          await deactivate({ sessionOrigin: SessionOrigin._Blur });
+
+          const blurred = (await getCurrentSession())!;
+          expect(blurred.status).toBe(SessionStatus._Inactive);
+          expect(await queued()).toEqual([]);
+          expect(drainSessionRequests).not.toHaveBeenCalled();
+
+          await deactivate();
+
+          expect(await queued()).toEqual([
+            expect.objectContaining({ durationSeconds: blurred.accumulatedDuration }),
+          ]);
+          expect((await getCurrentSession())!.checkpointedDuration).toBe(
+            blurred.accumulatedDuration,
+          );
+          expect(drainSessionRequests).toHaveBeenCalled();
         });
 
         test('no checkpoint when the duration has not grown since the last one', async () => {
