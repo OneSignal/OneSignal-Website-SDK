@@ -1280,7 +1280,7 @@ describe('ServiceWorker', () => {
           subscriptionId: 'started-subscription',
           ...overrides,
         });
-        const deactivate = () => {
+        const deactivate = (payload: Partial<UpsertOrDeactivateSessionPayload> = {}) => {
           matchAllFn.mockResolvedValueOnce([unfocusedClient]);
           return dispatchEvent(
             new ExtendableMessageEvent('message', {
@@ -1288,6 +1288,7 @@ describe('ServiceWorker', () => {
               payload: {
                 ...baseMessagePayload,
                 isSafari: false,
+                ...payload,
               } satisfies UpsertOrDeactivateSessionPayload,
             }),
           );
@@ -1372,17 +1373,39 @@ describe('ServiceWorker', () => {
           expect(sessionsAtDrain.every((id) => id === current.sessionId)).toBe(true);
         });
 
-        test.each([
-          ['a legacy session', { usesSessionsApi: false }],
+        test('an active session ends at the deactivate time with the duration it adds', async () => {
+          const activatedAt = Date.now() - 5_000;
+          await db.put(
+            'Sessions',
+            apiSession({
+              status: SessionStatus._Active,
+              lastActivatedTimestamp: activatedAt,
+              lastDeactivatedTimestamp: null,
+            }),
+          );
+
+          await deactivate();
+
+          const [end] = await queued();
+          expect(end).toMatchObject({ kind: 'update', sessionId: 'ending-session' });
+          expect(end.kind === 'update' && end.endTime).toBeGreaterThanOrEqual(activatedAt + 5_000);
+          expect(end.kind === 'update' && end.durationSeconds).toBeGreaterThanOrEqual(42 + 5);
+          expect(drainSessionRequests).toHaveBeenCalled();
+        });
+
+        test.each<[string, Partial<Session>, Partial<UpsertOrDeactivateSessionPayload>]>([
+          ['a legacy session', { usesSessionsApi: false }, {}],
           [
             'a session stored by an older SDK',
             { usesSessionsApi: undefined, sessionId: undefined },
+            {},
           ],
-          ['a session that still has local ids', { onesignalId: 'local-user' }],
-        ])('%s enqueues no end', async (_, overrides) => {
+          ['a session that still has local ids', { onesignalId: 'local-user' }, {}],
+          ['a page that sends no subscription type', {}, { subscriptionType: undefined }],
+        ])('%s enqueues no end', async (_, overrides, payload) => {
           await db.put('Sessions', apiSession(overrides));
 
-          await deactivate();
+          await deactivate(payload);
 
           expect(await queued()).toEqual([]);
           expect(drainSessionRequests).not.toHaveBeenCalled();

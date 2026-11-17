@@ -290,7 +290,7 @@ async function finalizeSession(
 ): Promise<boolean> {
   const { enableSessionDuration: sendOnFocusEnabled, outcomesConfig } = options;
   Log._debug('Finalize session', `duration: ${session.accumulatedDuration}s`);
-  const endQueued = await enqueueSessionEnd(session);
+  const endQueued = await enqueueSessionEnd(options, session);
   if (sendOnFocusEnabled) {
     Log._debug(`on_focus duration: ${session.accumulatedDuration}s`);
     const attribution = await getConfigAttribution(outcomesConfig);
@@ -306,17 +306,22 @@ async function finalizeSession(
 /**
  * Ends the session at the moment the last tab went hidden, not when the
  * threshold expired. Its create was queued with the pinned IDs, so the end
- * uses them too, and is skipped while they are local since no create exists.
+ * uses them too. It is skipped when the create could not have been queued:
+ * IDs still local, or a page that sends no subscription type.
  */
-async function enqueueSessionEnd(session: Session): Promise<boolean> {
+async function enqueueSessionEnd(
+  { subscriptionType }: UpsertOrDeactivateSessionPayload,
+  session: Session,
+): Promise<boolean> {
   const { appId, sessionId, usesSessionsApi, onesignalId, subscriptionId } = session;
+  if (!usesSessionsApi || !sessionId) return false;
   if (
-    !usesSessionsApi ||
-    !sessionId ||
+    !subscriptionType ||
     !onesignalId ||
     !subscriptionId ||
     hasLocalId(onesignalId, subscriptionId)
   ) {
+    Log._debug('Sessions API: end skipped, no create was queued');
     return false;
   }
   return tryEnqueue(() =>
