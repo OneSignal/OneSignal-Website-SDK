@@ -9,7 +9,7 @@ import type { APIHeaders } from '../models/APIHeaders';
 import { encodeRFC3986URIComponent } from '../utils/encode';
 import { IS_SERVICE_WORKER, VERSION } from '../utils/env';
 
-type SupportedMethods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+export type SupportedMethods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
 /**
  * One entry per URL path segment. `call` percent-encodes each entry on its own,
@@ -92,7 +92,37 @@ function call<T = unknown>(
   if (!requestHasAppId(path, data)) {
     return Promise.reject(AppIDMissingError);
   }
+  return executeFetch(...buildRequest(method, path, data, options));
+}
 
+/**
+ * Sends once with no retry on network failure, and resolves with the status even
+ * when the body is empty or not JSON (`result` is then `undefined`). For callers
+ * that own their retry policy.
+ */
+export async function callOnce<T = unknown>(
+  method: SupportedMethods,
+  path: ApiPath,
+  data: any,
+): Promise<OneSignalApiBaseResponse<T | undefined>> {
+  if (!requestHasAppId(path, data)) throw AppIDMissingError;
+
+  const response = await fetch(...buildRequest(method, path, data, undefined));
+  const retryAfter = parseInt(response.headers.get('Retry-After') ?? '');
+  return {
+    ok: response.ok,
+    result: await response.json().catch(() => undefined),
+    status: response.status,
+    retryAfterSeconds: retryAfter >= 0 ? retryAfter : undefined,
+  };
+}
+
+function buildRequest(
+  method: SupportedMethods,
+  path: ApiPath,
+  data: any,
+  options: RequestOptions | undefined,
+): [string, RequestInit] {
   const callHeaders = new Headers();
   callHeaders.append('Origin', getOrigin());
   callHeaders.append('SDK-Version', `onesignal/web/${VERSION}`);
@@ -109,7 +139,7 @@ function call<T = unknown>(
   }
 
   const contents: RequestInit = {
-    method: method || 'NO_METHOD_SPECIFIED',
+    method,
     headers: callHeaders,
     cache: 'no-cache',
   };
@@ -119,7 +149,7 @@ function call<T = unknown>(
   // getOneSignalApiUrl picks the API origin from the encoded path.
   const url = `${getOneSignalApiUrl({ action }).toString()}${action}`;
 
-  return executeFetch(url, contents);
+  return [url, contents];
 }
 
 async function executeFetch<T = unknown>(

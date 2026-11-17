@@ -7,10 +7,6 @@ import { createSession, updateSession } from './sessions';
 import type { CreateSessionRequest, UpdateSessionRequest } from './sessions';
 
 vi.mock('../libraries/Log');
-vi.mock('../helpers/general', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../helpers/general')>()),
-  delay: () => Promise.resolve(),
-}));
 
 const SESSION_ID = '0190a5b6-6c3e-7a1b-8c2d-3e4f5a6b7c8d';
 
@@ -113,6 +109,34 @@ describe('Sessions API', () => {
 
       expect(await createSession(APP_ID, createRequest)).toEqual({ kind: 'retry', status: 202 });
     });
+
+    test('retries a 202 with an empty body', async () => {
+      mockCreate(() => new HttpResponse(null, { status: 202 }));
+
+      expect(await createSession(APP_ID, createRequest)).toEqual({ kind: 'retry', status: 202 });
+    });
+
+    test('passes Retry-After through on a 202 without a session id', async () => {
+      mockCreate(() => HttpResponse.json({}, { status: 202, headers: { 'Retry-After': '60' } }));
+
+      expect(await createSession(APP_ID, createRequest)).toEqual({
+        kind: 'retry',
+        status: 202,
+        retryAfterSeconds: 60,
+      });
+    });
+
+    test.each([NaN, Infinity, 1e20])(
+      'drops a start time of %d without sending',
+      async (startTime) => {
+        mockCreate(accepted);
+
+        expect(await createSession(APP_ID, { ...createRequest, startTime })).toEqual({
+          kind: 'drop',
+        });
+        expect(requestBody).toBeUndefined();
+      },
+    );
   });
 
   describe('updateSession', () => {
@@ -144,6 +168,24 @@ describe('Sessions API', () => {
       await updateSession(APP_ID, SESSION_ID, { ...updateRequest, endTime: 1_700_000_042_500 });
 
       expect(requestBody).toMatchObject({ end_time: '2023-11-14T22:14:02.500Z' });
+    });
+
+    test.each([204, 202])('succeeds on a %i with an empty body', async (status) => {
+      mockUpdate(() => new HttpResponse(null, { status }));
+
+      expect(await updateSession(APP_ID, SESSION_ID, updateRequest)).toEqual({
+        kind: 'success',
+        value: undefined,
+      });
+    });
+
+    test('drops an invalid end time without sending', async () => {
+      mockUpdate(() => HttpResponse.json({}, { status: 202 }));
+
+      expect(await updateSession(APP_ID, SESSION_ID, { ...updateRequest, endTime: NaN })).toEqual({
+        kind: 'drop',
+      });
+      expect(requestBody).toBeUndefined();
     });
   });
 
@@ -189,18 +231,46 @@ describe('Sessions API', () => {
       expect(await update()).toEqual({ kind: 'retry', status: 503 });
     });
 
-    test('retries a network failure', async () => {
-      mockBoth(() => HttpResponse.error());
+    test('ignores a negative Retry-After', async () => {
+      mockBoth(() =>
+        HttpResponse.json({ errors: [] }, { status: 503, headers: { 'Retry-After': '-5' } }),
+      );
 
-      expect(await create()).toEqual({ kind: 'retry' });
-      expect(await update()).toEqual({ kind: 'retry' });
+      expect(await create()).toEqual({ kind: 'retry', status: 503 });
+      expect(await update()).toEqual({ kind: 'retry', status: 503 });
     });
 
-    test('retries a response that is not JSON', async () => {
-      mockBoth(() => new HttpResponse('<html>Bad Gateway</html>', { status: 502 }));
+    test('retries a network failure after a single attempt', async () => {
+      let attempts = 0;
+      mockBoth(() => {
+        attempts++;
+        return HttpResponse.error();
+      });
 
       expect(await create()).toEqual({ kind: 'retry' });
       expect(await update()).toEqual({ kind: 'retry' });
+      expect(attempts).toBe(2);
+    });
+
+    test('retries a 5xx that is not JSON, keeping Retry-After', async () => {
+      mockBoth(
+        () =>
+          new HttpResponse('<html>Bad Gateway</html>', {
+            status: 502,
+            headers: { 'Retry-After': '30' },
+          }),
+      );
+
+      const expected = { kind: 'retry', status: 502, retryAfterSeconds: 30 };
+      expect(await create()).toEqual(expected);
+      expect(await update()).toEqual(expected);
+    });
+
+    test.each([400, 403, 404])('drops a %i that is not JSON', async (status) => {
+      mockBoth(() => new HttpResponse('<html>Error</html>', { status }));
+
+      expect(await create()).toEqual({ kind: 'drop', status });
+      expect(await update()).toEqual({ kind: 'drop', status });
     });
 
     test('drops a request without a valid app id', async () => {
