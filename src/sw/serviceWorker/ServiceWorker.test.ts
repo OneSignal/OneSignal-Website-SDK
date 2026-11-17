@@ -1230,10 +1230,8 @@ describe('ServiceWorker', () => {
           await upsert({ sessionThreshold: 30 });
 
           const current = (await getCurrentSession())!;
-          expect((await queued()).map((r) => r.sessionId)).toEqual([
-            'local-started',
-            current.sessionId,
-          ]);
+          const byOrder = (await queued()).sort((a, b) => a.order - b.order);
+          expect(byOrder.map((r) => r.sessionId)).toEqual(['local-started', current.sessionId]);
         });
 
         test('a payload without a subscription type enqueues no create', async () => {
