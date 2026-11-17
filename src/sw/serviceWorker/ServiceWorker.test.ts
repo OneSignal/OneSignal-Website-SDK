@@ -1358,6 +1358,20 @@ describe('ServiceWorker', () => {
           expect((await queued())[0]).toMatchObject({ endTime: deactivatedAt });
         });
 
+        test('an expired session found on upsert drains only after the next session is saved', async () => {
+          await db.put('Sessions', apiSession());
+          const sessionsAtDrain: (string | undefined)[] = [];
+          vi.mocked(drainSessionRequests).mockImplementationOnce(async () => {
+            sessionsAtDrain.push((await getCurrentSession())?.sessionId);
+          });
+
+          await upsertSession({ ...baseMessagePayload, isSafari: false, sessionThreshold: 30 });
+
+          const current = (await getCurrentSession())!;
+          expect(sessionsAtDrain.length).toBeGreaterThan(0);
+          expect(sessionsAtDrain.every((id) => id === current.sessionId)).toBe(true);
+        });
+
         test.each([
           ['a legacy session', { usesSessionsApi: false }],
           [

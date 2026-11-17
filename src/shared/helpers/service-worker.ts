@@ -103,10 +103,13 @@ async function continueOrRestartSession(
   // If failed to report/clean-up last time, we can attempt to try again here.
   // TODO: Possibly check that it's not unreasonably long.
   // TODO: Or couple with periodic ping for better results.
-  await finalizeSession(options, existingSession);
+  // Drains only once the new session is saved, so a concurrent upsert never
+  // finds the row missing and starts a second session.
+  const endQueued = await finalizeSession(options, existingSession);
   const session = await startNewSession(options);
   await db.put('Sessions', session);
   await reportSessionStart(options, session);
+  if (endQueued) await drainSessionRequests();
 }
 
 type NewSession = Session & Required<Pick<Session, 'sessionId' | 'usesSessionsApi'>>;
@@ -205,7 +208,9 @@ export async function deactivateSession(
 
   // The finalize step reuses this payload after the threshold, so a token the
   // page refreshes in that window is not used for the session_time request.
-  const finalizeSWSession = () => finalizeSession(options, existingSession);
+  const finalizeSWSession = async () => {
+    if (await finalizeSession(options, existingSession)) await drainSessionRequests();
+  };
 
   /**
    * For 2 subsequent deactivate requests we need to make sure there is an active finalization timeout.
@@ -282,7 +287,7 @@ async function markOnSessionPending(session: Session, externalId: string): Promi
 async function finalizeSession(
   options: UpsertOrDeactivateSessionPayload,
   session: Session,
-): Promise<void> {
+): Promise<boolean> {
   const { enableSessionDuration: sendOnFocusEnabled, outcomesConfig } = options;
   Log._debug('Finalize session', `duration: ${session.accumulatedDuration}s`);
   const endQueued = await enqueueSessionEnd(session);
@@ -294,8 +299,8 @@ async function finalizeSession(
   }
 
   await Promise.all([cleanupCurrentSession(), clearStore('Outcomes.NotificationClicked')]);
-  if (endQueued) await drainSessionRequests();
   Log._debug('Finalize session finished');
+  return endQueued;
 }
 
 /**
