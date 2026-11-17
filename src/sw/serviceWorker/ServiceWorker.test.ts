@@ -1384,12 +1384,23 @@ describe('ServiceWorker', () => {
             }),
           );
 
+          const putSpy = vi.spyOn(db, 'put');
+
           await deactivate();
 
-          const [end] = await queued();
-          expect(end).toMatchObject({ kind: 'update', sessionId: 'ending-session' });
-          expect(end.kind === 'update' && end.endTime).toBeGreaterThanOrEqual(activatedAt + 5_000);
-          expect(end.kind === 'update' && end.durationSeconds).toBeGreaterThanOrEqual(42 + 5);
+          const deactivated = putSpy.mock.calls
+            .map(([, value]) => value as Session)
+            .find((value) => value.status === SessionStatus._Inactive)!;
+          expect(deactivated.lastDeactivatedTimestamp).toBeGreaterThanOrEqual(activatedAt + 5_000);
+          expect(deactivated.accumulatedDuration).toBeGreaterThanOrEqual(42 + 5);
+          expect(await queued()).toEqual([
+            expect.objectContaining({
+              kind: 'update',
+              sessionId: 'ending-session',
+              endTime: deactivated.lastDeactivatedTimestamp,
+              durationSeconds: deactivated.accumulatedDuration,
+            }),
+          ]);
           expect(drainSessionRequests).toHaveBeenCalled();
         });
 
