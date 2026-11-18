@@ -792,14 +792,10 @@ async function onNotificationClicked(event: NotificationEvent) {
         return;
       }
 
+      // The session row is left alone: a finalize can delete it during this
+      // write, and writing it back would restore an ended session. The upsert
+      // that follows reads the click when it starts a new session.
       await putNotificationClickedForOutcomes(appId, notificationClickEvent);
-
-      // upgrade existing session to be directly attributed to the notif
-      // if it results in re-focusing the site
-      if (existingSession) {
-        existingSession.notificationId = notificationClickEvent.notification.notificationId;
-        await db.put('Sessions', existingSession);
-      }
     } catch (e) {
       Log._error('Failed to save click', e);
     }

@@ -11,7 +11,6 @@ import { getAllNotificationClickedForOutcomes } from '../database/notifications'
 import { FeatureFlag, isFeatureEnabledInWorker } from '../features/featureFlags';
 import Log from '../libraries/Log';
 import { IDManager } from '../managers/IDManager';
-import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
 import {
   HEARTBEAT_INTERVAL_SECONDS,
@@ -61,19 +60,10 @@ export function serializeSessionRefresh<T>(fn: () => Promise<T>): Promise<T> {
 
 // Call through serializeSessionRefresh.
 export async function upsertSession(options: UpsertOrDeactivateSessionPayload): Promise<void> {
-  const { appId } = options;
   const existingSession = await getCurrentSession();
 
   if (!existingSession) {
-    const session = await startNewSession(options);
-
-    // if there is a record about a clicked notification in our database, attribute session to it.
-    const clickedNotification: OutcomesNotificationClicked | null =
-      await getLastNotificationClickedForOutcomes(appId);
-    if (clickedNotification) {
-      session.notificationId = clickedNotification.notificationId;
-    }
-
+    const session = await startNewSession(options, await getDirectAttributionId(options));
     await db.put('Sessions', session);
     await reportSessionStart(options, session);
     return;
@@ -123,10 +113,15 @@ async function continueOrRestartSession(
   // If failed to report/clean-up last time, we can attempt to try again here.
   // TODO: Possibly check that it's not unreasonably long.
   // TODO: Or couple with periodic ping for better results.
+  // Read before finalize, which clears the stored clicks.
+  const notificationId = await getDirectAttributionId(
+    options,
+    existingSession.lastDeactivatedTimestamp,
+  );
   // Drains only once the new session is saved, so a concurrent upsert never
   // finds the row missing and starts a second session.
   const endQueued = await finalizeSession(options, existingSession);
-  const session = await startNewSession(options);
+  const session = await startNewSession(options, notificationId);
   await db.put('Sessions', session);
   await reportSessionStart(options, session);
   if (endQueued) await drainSessionRequests();
@@ -134,13 +129,13 @@ async function continueOrRestartSession(
 
 type NewSession = Session & Required<Pick<Session, 'sessionId' | 'usesSessionsApi'>>;
 
-async function startNewSession({
-  appId,
-  onesignalId,
-  subscriptionId,
-}: SessionUser): Promise<NewSession> {
+async function startNewSession(
+  { appId, onesignalId, subscriptionId }: SessionUser,
+  notificationId: string | null,
+): Promise<NewSession> {
   return initializeNewSession({
     appId,
+    notificationId,
     sessionId: crypto.randomUUID(),
     usesSessionsApi: await isFeatureEnabledInWorker(FeatureFlag._SessionsV2ApiCutover),
     onesignalId,
@@ -151,7 +146,7 @@ async function startNewSession({
 async function reportSessionStart(user: SessionUser, session: NewSession): Promise<void> {
   await Promise.all([
     sendOnSessionCall(user, session),
-    session.usesSessionsApi && createServerSession(user, session.sessionId, session.startTimestamp),
+    session.usesSessionsApi && createServerSession(user, session.sessionId, session),
   ]);
 }
 
@@ -161,9 +156,9 @@ async function reportSessionStart(user: SessionUser, session: NewSession): Promi
  * are re-pinned only once the create is queued, so a later upsert retries it.
  */
 async function enqueueDeferredCreate(user: SessionUser, session: Session): Promise<boolean> {
-  const { sessionId, usesSessionsApi, onesignalId, subscriptionId, startTimestamp } = session;
+  const { sessionId, usesSessionsApi, onesignalId, subscriptionId } = session;
   if (!usesSessionsApi || !sessionId || !hasLocalId(onesignalId, subscriptionId)) return false;
-  if (!(await enqueueCreate(user, sessionId, startTimestamp))) return false;
+  if (!(await enqueueCreate(user, sessionId, session))) return false;
 
   session.onesignalId = user.onesignalId;
   session.subscriptionId = user.subscriptionId;
@@ -174,15 +169,15 @@ async function enqueueDeferredCreate(user: SessionUser, session: Session): Promi
 async function createServerSession(
   user: SessionUser,
   sessionId: string,
-  startTime: number,
+  session: Session,
 ): Promise<void> {
-  if (await enqueueCreate(user, sessionId, startTime)) await drainSessionRequests();
+  if (await enqueueCreate(user, sessionId, session)) await drainSessionRequests();
 }
 
 async function enqueueCreate(
   { appId, onesignalId, subscriptionId, subscriptionType }: SessionUser,
   sessionId: string,
-  startTime: number,
+  { startTimestamp, notificationId }: Session,
 ): Promise<boolean> {
   // Queued records are never rewritten, so a create with a local ID could never send.
   if (!subscriptionType || hasLocalId(onesignalId, subscriptionId)) {
@@ -196,7 +191,8 @@ async function enqueueCreate(
       onesignalId,
       subscriptionId,
       subscriptionType,
-      startTime,
+      startTime: startTimestamp,
+      directAttributionId: notificationId || undefined,
     }),
   );
 }
@@ -446,18 +442,22 @@ const resetSentUniqueOutcomes = async (): Promise<void> => {
   await Promise.all(promises);
 };
 
-const getLastNotificationClickedForOutcomes = async (
-  appId: string,
-): Promise<OutcomesNotificationClicked | null> => {
-  let allClickedNotifications: OutcomesNotificationClicked[] = [];
-  try {
-    allClickedNotifications = await getAllNotificationClickedForOutcomes();
-  } catch (e) {
-    Log._error('getLastClickedNotif error', e);
-  }
-  const predicate = (notification: OutcomesNotificationClicked) => notification.appId === appId;
-  return allClickedNotifications.find(predicate) || null;
-};
+/**
+ * The notification whose click starts a new session. A click stored before the
+ * previous session last went inactive belongs to that session: it resumed it,
+ * and the finalize that would have cleared it did not run.
+ */
+async function getDirectAttributionId(
+  { appId, outcomesConfig }: UpsertOrDeactivateSessionPayload,
+  previousSessionDeactivatedAt?: number | null,
+): Promise<string | null> {
+  if (!outcomesConfig.direct?.enabled) return null;
+  const clicks = await getAllNotificationClickedForOutcomes().catch(() => []);
+  const click = clicks.find(
+    (c) => c.appId === appId && c.timestamp >= (previousSessionDeactivatedAt || 0),
+  );
+  return click?.notificationId || null;
+}
 
 function timeInSecondsBetweenTimestamps(timestamp1: number, timestamp2: number): number {
   if (timestamp1 <= timestamp2) {
