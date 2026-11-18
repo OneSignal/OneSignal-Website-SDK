@@ -114,7 +114,7 @@ describe('SessionManager', () => {
       expect(winner).toBe('login');
     });
 
-    test('handleOnBeforeUnload should wait for login promise', async () => {
+    test('handlePageHide should wait for login promise', async () => {
       const loginPromise = (async function () {
         await LoginManager.login(EXTERNAL_ID);
         return 'login';
@@ -122,7 +122,7 @@ describe('SessionManager', () => {
 
       const sessionManager = new SessionManager(OneSignal._context);
       const sessionPromise = (async function () {
-        await sessionManager._handleOnBeforeUnload();
+        await sessionManager._handlePageHide();
         return 'session';
       })();
 
@@ -194,6 +194,18 @@ describe('SessionManager', () => {
       const setupSpy = vi.spyOn(sm, '_setupSessionEventListeners');
       await sm._upsertSession(SessionOrigin._Focus);
       expect(setupSpy).toHaveBeenCalled();
+    });
+
+    test('a pagehide deactivates the session once', () => {
+      supportsServiceWorkersSpy.mockReturnValue(true);
+      OneSignal._cache.isPageHideEventSetup = false;
+      const pageHideSpy = vi.spyOn(sm, '_handlePageHide').mockResolvedValue(undefined);
+
+      sm._setupSessionEventListeners();
+      sm._setupSessionEventListeners();
+      window.dispatchEvent(new Event('pagehide'));
+
+      expect(pageHideSpy).toHaveBeenCalledOnce();
     });
 
     test('_upsertSession emits SESSION_STARTED when SW not supported', async () => {
@@ -338,7 +350,7 @@ describe('SessionManager', () => {
       });
     });
 
-    test('beforeunload carries externalId and jwt under IV, and only externalId without a token', async () => {
+    test('pagehide carries externalId and jwt under IV, and only externalId without a token', async () => {
       setJwtRequirement(JwtRequirement._Required);
       User._createOrGetInstance();
       vi.spyOn(sm, '_getOneSignalAndSubscriptionIds').mockResolvedValue({
@@ -349,14 +361,14 @@ describe('SessionManager', () => {
         .spyOn(OneSignal._context._workerMessenger, '_directPostMessageToSW')
         .mockResolvedValue(undefined);
 
-      await sm._handleOnBeforeUnload();
+      await sm._handlePageHide();
       expect(directPostSpy).toHaveBeenCalledExactlyOnceWith(
         expect.anything(),
         expect.objectContaining({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: undefined }),
       );
 
       OneSignal._coreDirector._jwtTokenStore._putJwt(EXTERNAL_ID, JWT);
-      await sm._handleOnBeforeUnload();
+      await sm._handlePageHide();
       expect(directPostSpy).toHaveBeenCalledTimes(2);
       expect(directPostSpy).toHaveBeenLastCalledWith(
         expect.anything(),

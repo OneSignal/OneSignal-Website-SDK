@@ -154,7 +154,7 @@ export class SessionManager implements ISessionManager {
     }
   }
 
-  async _handleOnBeforeUnload(): Promise<void> {
+  async _handlePageHide(): Promise<void> {
     await LoginManager._switchingUsersPromise;
 
     if (!User._singletonInstance?.onesignalId) {
@@ -162,27 +162,26 @@ export class SessionManager implements ISessionManager {
     }
 
     try {
-      // don't have much time on before unload
-      // have to skip adding device record to the payload
+      // Little time before the page goes away, so the message skips the messenger.
       const ids = await this._getOneSignalAndSubscriptionIds();
       const payload: UpsertOrDeactivateSessionPayload = {
         ...ids,
         appId: this._context._appConfig.appId,
         sessionThreshold: this._context._appConfig.sessionThreshold!,
         enableSessionDuration: this._context._appConfig.enableSessionDuration!,
-        sessionOrigin: SessionOrigin._BeforeUnload,
+        sessionOrigin: SessionOrigin._PageHide,
         isSafari: hasSafariWindow(),
         outcomesConfig: this._context._appConfig.userConfig.outcomes!,
         ...this._ivSessionCredentials(),
       };
 
-      Log._debug('SW deactivate (beforeunload)');
+      Log._debug('SW deactivate (pagehide)');
       void this._context._workerMessenger._directPostMessageToSW(
         WorkerMessengerCommand._SessionDeactivate,
         payload,
       );
     } catch (e) {
-      Log._error('beforeunload error:', e);
+      Log._error('pagehide error:', e);
     }
   }
 
@@ -270,18 +269,10 @@ export class SessionManager implements ISessionManager {
       OneSignal._cache.isVisibilityChangeEventSetup = true;
     }
 
-    if (!OneSignal._cache.isBeforeUnloadEventSetup) {
-      // tracks closing of a tab / reloading / navigating away
-      window.addEventListener(
-        'beforeunload',
-        (e) => {
-          void this._handleOnBeforeUnload();
-          // deleting value to not show confirmation dialog
-          delete e.returnValue;
-        },
-        true,
-      );
-      OneSignal._cache.isBeforeUnloadEventSetup = true;
+    if (!OneSignal._cache.isPageHideEventSetup) {
+      // Fires on tab close, reload and navigation, including where beforeunload does not, like mobile Safari.
+      window.addEventListener('pagehide', () => void this._handlePageHide(), true);
+      OneSignal._cache.isPageHideEventSetup = true;
     }
   }
 

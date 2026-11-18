@@ -14,7 +14,7 @@ import { IDManager } from '../managers/IDManager';
 import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
 import { SessionStatus } from '../session/constants';
-import { initializeNewSession } from '../session/helpers';
+import { initializeNewSession, isBackgroundOrigin } from '../session/helpers';
 import type { Session, SessionUser, UpsertOrDeactivateSessionPayload } from '../session/types';
 import { getBaseUrl } from './general';
 import { getConfigAttribution } from './OutcomesHelper';
@@ -208,8 +208,20 @@ export async function deactivateSession(
 
   // The finalize step reuses this payload after the threshold, so a token the
   // page refreshes in that window is not used for the session_time request.
+  // The caller stores this timer's cancel only once deactivate returns, so an
+  // upsert that arrives meanwhile cannot cancel it. The stored row is the truth:
+  // a session that resumed and went inactive again has a newer deactivate time.
   const finalizeSWSession = async () => {
-    if (await finalizeSession(options, existingSession)) await drainSessionRequests();
+    const current = await getCurrentSession();
+    if (
+      current?.status !== SessionStatus._Inactive ||
+      current.startTimestamp !== existingSession.startTimestamp ||
+      current.lastDeactivatedTimestamp !== existingSession.lastDeactivatedTimestamp
+    ) {
+      Log._debug('Finalize skipped, session resumed or replaced');
+      return;
+    }
+    if (await finalizeSession(options, current)) await drainSessionRequests();
   };
 
   /**
@@ -218,6 +230,11 @@ export async function deactivateSession(
    * No update needed for the session, early return.
    */
   if (existingSession.status === SessionStatus._Inactive) {
+    // A blur made the session inactive without a checkpoint; the tab hiding later does.
+    if (await enqueueCheckpoint(options, existingSession)) {
+      if (!(await saveCheckpointedDuration(existingSession))) return undefined;
+      void drainSessionRequests();
+    }
     return cancelableTimeout(finalizeSWSession, thresholdInSeconds);
   }
 
@@ -240,11 +257,40 @@ export async function deactivateSession(
   existingSession.accumulatedDuration += timeSinceLastActivatedInSeconds;
   existingSession.status = SessionStatus._Inactive;
 
-  const cancelableFinalize = cancelableTimeout(finalizeSWSession, thresholdInSeconds);
-
+  const checkpointQueued = await enqueueCheckpoint(options, existingSession);
   await db.put('Sessions', existingSession);
+  // Not awaited, so the caller gets the finalize timer without waiting on the network.
+  if (checkpointQueued) void drainSessionRequests();
 
-  return cancelableFinalize;
+  // Started once the row is inactive, since finalize skips a row that is not.
+  return cancelableTimeout(finalizeSWSession, thresholdInSeconds);
+}
+
+/**
+ * Sends the duration so far without ending the session, so a browser closed
+ * in the background still leaves it on the server. The worker deactivates only
+ * once no tab has focus, so this runs once for all tabs. A blur alone sends
+ * nothing: switching to another app would send one per switch.
+ */
+async function enqueueCheckpoint(
+  options: UpsertOrDeactivateSessionPayload,
+  session: Session,
+): Promise<boolean> {
+  if (!isBackgroundOrigin(options.sessionOrigin)) return false;
+  if (session.accumulatedDuration <= (session.checkpointedDuration ?? 0)) return false;
+  if (!(await enqueueDurationUpdate(options, session))) return false;
+  session.checkpointedDuration = session.accumulatedDuration;
+  return true;
+}
+
+// A finalize can delete the row during the enqueue. Writing the row read
+// before it would restore an ended session, so only the field is saved.
+async function saveCheckpointedDuration(session: Session): Promise<boolean> {
+  const current = await getCurrentSession();
+  if (!current || current.startTimestamp !== session.startTimestamp) return false;
+  current.checkpointedDuration = session.checkpointedDuration;
+  await db.put('Sessions', current);
+  return true;
 }
 
 async function sendOnSessionCall(user: SessionUser, session: Session) {
@@ -290,7 +336,12 @@ async function finalizeSession(
 ): Promise<boolean> {
   const { enableSessionDuration: sendOnFocusEnabled, outcomesConfig } = options;
   Log._debug('Finalize session', `duration: ${session.accumulatedDuration}s`);
-  const endQueued = await enqueueSessionEnd(options, session);
+  // Ends at the moment the last tab went hidden, not when the threshold expired.
+  const endQueued = await enqueueDurationUpdate(
+    options,
+    session,
+    session.lastDeactivatedTimestamp ?? Date.now(),
+  );
   if (sendOnFocusEnabled) {
     Log._debug(`on_focus duration: ${session.accumulatedDuration}s`);
     const attribution = await getConfigAttribution(outcomesConfig);
@@ -304,14 +355,14 @@ async function finalizeSession(
 }
 
 /**
- * Ends the session at the moment the last tab went hidden, not when the
- * threshold expired. Its create was queued with the pinned IDs, so the end
- * uses them too. It is skipped when the create could not have been queued:
- * IDs still local, or a page that sends no subscription type.
+ * The session's create was queued with the pinned IDs, so its updates use them
+ * too. Skipped when the create could not have been queued: IDs still local, or
+ * a page that sends no subscription type.
  */
-async function enqueueSessionEnd(
+async function enqueueDurationUpdate(
   { subscriptionType }: UpsertOrDeactivateSessionPayload,
   session: Session,
+  endTime?: number,
 ): Promise<boolean> {
   const { appId, sessionId, usesSessionsApi, onesignalId, subscriptionId } = session;
   if (!usesSessionsApi || !sessionId) return false;
@@ -321,7 +372,7 @@ async function enqueueSessionEnd(
     !subscriptionId ||
     hasLocalId(onesignalId, subscriptionId)
   ) {
-    Log._debug('Sessions API: end skipped, no create was queued');
+    Log._debug('Sessions API: update skipped, no create was queued');
     return false;
   }
   return tryEnqueue(() =>
@@ -331,7 +382,7 @@ async function enqueueSessionEnd(
       onesignalId,
       subscriptionId,
       durationSeconds: session.accumulatedDuration,
-      endTime: session.lastDeactivatedTimestamp ?? Date.now(),
+      endTime,
     }),
   );
 }

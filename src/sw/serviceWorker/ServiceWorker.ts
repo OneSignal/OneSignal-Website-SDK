@@ -30,9 +30,11 @@ import type {
   NotificationClickEventInternal,
 } from 'src/shared/notifications/types';
 import { SessionStatus } from 'src/shared/session/constants';
+import { isBackgroundOrigin } from 'src/shared/session/helpers';
 import {
   type PageVisibilityRequest,
   type PageVisibilityResponse,
+  type SessionOriginValue,
   type UpsertOrDeactivateSessionPayload,
 } from 'src/shared/session/types';
 import { NotificationType } from 'src/shared/subscriptions/constants';
@@ -417,6 +419,7 @@ async function updateSessionBasedOnHasActive(
       event.waitUntil(cancelableFinalize.promise);
     }
   }
+  debouncedBackgroundOrigin = undefined;
 }
 
 async function refreshSession(
@@ -472,11 +475,20 @@ function checkIfAnyClientsFocusedAndUpdateSession(
   event.waitUntil(getClientStatusesCancelable.promise);
 }
 
+/**
+ * A hiding tab sends both blur and hidden, in either order, and the debounce
+ * keeps only the last payload. Kept until the session is updated, so a blur
+ * that lands last, or cancels the Safari visibility poll, still counts as the
+ * tab hiding.
+ */
+let debouncedBackgroundOrigin: SessionOriginValue | undefined;
+
 function debounceRefreshSession(
   event: ExtendableMessageEvent,
-  options: UpsertOrDeactivateSessionPayload,
+  payload: UpsertOrDeactivateSessionPayload,
 ) {
-  Log._debug('[SW] debounceRefresh', redactJwt(options));
+  Log._debug('[SW] debounceRefresh', redactJwt(payload));
+  if (isBackgroundOrigin(payload.sessionOrigin)) debouncedBackgroundOrigin = payload.sessionOrigin;
 
   if (self.cancel) {
     self.cancel();
@@ -484,7 +496,8 @@ function debounceRefreshSession(
   }
 
   const executeRefreshSession = async () => {
-    await refreshSession(event, options);
+    const sessionOrigin = debouncedBackgroundOrigin ?? payload.sessionOrigin;
+    await refreshSession(event, { ...payload, sessionOrigin });
   };
 
   const cancelableRefreshSession = cancelableTimeout(executeRefreshSession, 1);
