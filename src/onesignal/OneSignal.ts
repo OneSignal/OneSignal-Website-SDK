@@ -191,7 +191,9 @@ export default class OneSignal {
 
     await OneSignal._initializeCoreModuleAndOSNamespaces();
     // Writes to IndexedDB, so it waits for hydration in case the write stalls and trips the breaker.
-    void refreshFeatureFlags(OneSignal.config.appId);
+    void refreshFeatureFlags(OneSignal.config.appId).then(() =>
+      OneSignal._context._sessionManager._startHeartbeat(),
+    );
 
     OneSignal._consentGiven = await getConsentGiven();
     if (getConsentRequired()) {

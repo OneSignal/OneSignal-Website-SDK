@@ -22,11 +22,33 @@ export function wrapDb<S extends { [K in keyof S]: { key: IDBValidKey; value: un
     delete: async <K extends keyof S & string>(s: K, k: S[K]['key']) =>
       wrapRequest(store(s, 'readwrite').delete(k)),
     clear: async <K extends keyof S & string>(s: K) => wrapRequest(store(s, 'readwrite').clear()),
+    raw,
     close: () => raw.close(),
     get objectStoreNames() {
       return raw.objectStoreNames;
     },
   };
+}
+
+/** Reads and writes in one transaction. `fn` returns undefined to leave the record as is. */
+export function updateInTransaction<T>(
+  raw: IDBDatabase,
+  storeName: string,
+  key: IDBValidKey,
+  fn: (value: T | undefined) => T | undefined,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const tx = raw.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    const req = store.get(key);
+    req.onsuccess = () => {
+      const next = fn(req.result as T | undefined);
+      if (next !== undefined) store.put(next);
+    };
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error);
+  });
 }
 
 export function openDB(

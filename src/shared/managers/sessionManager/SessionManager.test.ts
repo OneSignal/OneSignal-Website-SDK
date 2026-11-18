@@ -380,6 +380,36 @@ describe('SessionManager', () => {
       expect(heartbeats()).toHaveLength(1);
     });
 
+    test('a later page view, which only sets up listeners, starts the timer', async () => {
+      sm._setupSessionEventListeners();
+
+      await vi.advanceTimersByTimeAsync(INTERVAL_MS);
+
+      expect(heartbeats()).toHaveLength(1);
+    });
+
+    test('a flag that turns on after setup starts the timer on the next start call', async () => {
+      setFeatureFlags([]);
+      sm._setupSessionEventListeners();
+      await vi.advanceTimersByTimeAsync(INTERVAL_MS);
+      expect(heartbeats()).toHaveLength(0);
+
+      setFeatureFlags([FeatureFlag._SessionsV2ApiCutover]);
+      sm._startHeartbeat();
+      await vi.advanceTimersByTimeAsync(INTERVAL_MS);
+
+      expect(heartbeats()).toHaveLength(1);
+    });
+
+    test('no timer before session listeners are set up', async () => {
+      OneSignal._cache.isVisibilityChangeEventSetup = false;
+      sm._startHeartbeat();
+
+      await vi.advanceTimersByTimeAsync(INTERVAL_MS);
+
+      expect(heartbeats()).toHaveLength(0);
+    });
+
     test('flag off: no timer', async () => {
       setFeatureFlags([]);
       const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');

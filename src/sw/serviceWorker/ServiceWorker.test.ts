@@ -1936,6 +1936,15 @@ describe('ServiceWorker', () => {
           expect(await queued()).toHaveLength(1);
         });
 
+        test('ticks from two tabs at the same moment send once', async () => {
+          await db.put('Sessions', activeSession(HEARTBEAT_INTERVAL_SECONDS));
+
+          await Promise.all([heartbeat(), heartbeat()]);
+
+          expect(await queued()).toHaveLength(1);
+          expect(drainSessionRequests).toHaveBeenCalledOnce();
+        });
+
         test('the interval counts from the last duration sent', async () => {
           await db.put(
             'Sessions',

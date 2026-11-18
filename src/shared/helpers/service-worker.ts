@@ -6,7 +6,13 @@ import { enqueueSessionCreate, enqueueSessionUpdate } from '../../sw/sessionRequ
 import { drainSessionRequests } from '../../sw/sessionRequests/sender';
 import { sendSessionDuration, updateUserSession } from '../api/sw';
 import { encodeHashAsUriComponent } from '../context/helpers';
-import { cleanupCurrentSession, clearStore, db, getCurrentSession } from '../database/client';
+import {
+  cleanupCurrentSession,
+  clearStore,
+  db,
+  getCurrentSession,
+  updateRecord,
+} from '../database/client';
 import { getAllNotificationClickedForOutcomes } from '../database/notifications';
 import { FeatureFlag, isFeatureEnabledInWorker } from '../features/featureFlags';
 import Log from '../libraries/Log';
@@ -16,6 +22,7 @@ import Path from '../models/Path';
 import {
   HEARTBEAT_INTERVAL_SECONDS,
   HEARTBEAT_SLACK_SECONDS,
+  ONESIGNAL_SESSION_KEY,
   SessionStatus,
 } from '../session/constants';
 import { initializeNewSession, isBackgroundOrigin } from '../session/helpers';
@@ -307,28 +314,39 @@ async function enqueueCheckpoint(
 
 /**
  * Sends the duration of an active session once it has grown a heartbeat
- * interval past the last duration sent. Every visible tab ticks, so this
- * check is what keeps it to one request per interval across tabs.
+ * interval past the last duration sent. Every visible tab ticks, so the claim
+ * is what keeps it to one request per interval across tabs.
  */
 export async function sendSessionHeartbeat(
   options: UpsertOrDeactivateSessionPayload,
 ): Promise<void> {
-  const session = await getCurrentSession();
-  if (session?.status !== SessionStatus._Active) return;
+  const claimed = await claimHeartbeat(options);
+  if (claimed && (await enqueueDurationUpdate(options, claimed))) await drainSessionRequests();
+}
 
-  const duration =
-    session.accumulatedDuration +
-    timeInSecondsBetweenTimestamps(Date.now(), session.lastActivatedTimestamp);
-  // Page timers start before the worker's debounced activation, so a tick
-  // can land a little short of a full interval.
-  const due =
-    (session.checkpointedDuration ?? 0) + HEARTBEAT_INTERVAL_SECONDS - HEARTBEAT_SLACK_SECONDS;
-  if (duration < due) return;
-
-  const heartbeat = { ...session, accumulatedDuration: duration, checkpointedDuration: duration };
-  if (!(await enqueueDurationUpdate(options, heartbeat))) return;
-  if (!(await saveCheckpointedDuration(heartbeat))) return;
-  await drainSessionRequests();
+/**
+ * Checks the interval and records the duration in one transaction, so a
+ * deactivate cannot be overwritten in between and two tabs cannot both claim
+ * an interval. A failed enqueue then skips that interval.
+ */
+async function claimHeartbeat(
+  options: UpsertOrDeactivateSessionPayload,
+): Promise<Session | undefined> {
+  let claimed: Session | undefined;
+  await updateRecord('Sessions', ONESIGNAL_SESSION_KEY, (session) => {
+    if (session?.status !== SessionStatus._Active || !canSendUpdate(options, session)) return;
+    const duration =
+      session.accumulatedDuration +
+      timeInSecondsBetweenTimestamps(Date.now(), session.lastActivatedTimestamp);
+    // Page timers start before the worker's debounced activation, so a tick
+    // can land a little short of a full interval.
+    const due =
+      (session.checkpointedDuration ?? 0) + HEARTBEAT_INTERVAL_SECONDS - HEARTBEAT_SLACK_SECONDS;
+    if (duration < due) return;
+    claimed = { ...session, accumulatedDuration: duration };
+    return { ...session, checkpointedDuration: duration };
+  });
+  return claimed;
 }
 
 // A finalize can delete the row during the enqueue. Writing the row read
@@ -336,11 +354,7 @@ export async function sendSessionHeartbeat(
 async function saveCheckpointedDuration(session: Session): Promise<boolean> {
   const current = await getCurrentSession();
   if (!current || current.startTimestamp !== session.startTimestamp) return false;
-  // A checkpoint and a heartbeat can overlap; the larger one was sent last.
-  current.checkpointedDuration = Math.max(
-    current.checkpointedDuration ?? 0,
-    session.checkpointedDuration ?? 0,
-  );
+  current.checkpointedDuration = session.checkpointedDuration;
   await db.put('Sessions', current);
   return true;
 }
@@ -411,12 +425,10 @@ async function finalizeSession(
  * too. Skipped when the create could not have been queued: IDs still local, or
  * a page that sends no subscription type.
  */
-async function enqueueDurationUpdate(
+function canSendUpdate(
   { subscriptionType }: UpsertOrDeactivateSessionPayload,
-  session: Session,
-  endTime?: number,
-): Promise<boolean> {
-  const { appId, sessionId, usesSessionsApi, onesignalId, subscriptionId } = session;
+  { sessionId, usesSessionsApi, onesignalId, subscriptionId }: Session,
+): boolean {
   if (!usesSessionsApi || !sessionId) return false;
   if (
     !subscriptionType ||
@@ -427,12 +439,22 @@ async function enqueueDurationUpdate(
     Log._debug('Sessions API: update skipped, no create was queued');
     return false;
   }
+  return true;
+}
+
+async function enqueueDurationUpdate(
+  options: UpsertOrDeactivateSessionPayload,
+  session: Session,
+  endTime?: number,
+): Promise<boolean> {
+  if (!canSendUpdate(options, session)) return false;
+  const { appId, sessionId, onesignalId, subscriptionId } = session;
   return tryEnqueue(() =>
     enqueueSessionUpdate({
       appId,
-      sessionId,
-      onesignalId,
-      subscriptionId,
+      sessionId: sessionId!,
+      onesignalId: onesignalId!,
+      subscriptionId: subscriptionId!,
       durationSeconds: session.accumulatedDuration,
       endTime,
     }),

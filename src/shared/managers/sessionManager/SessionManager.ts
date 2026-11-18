@@ -50,7 +50,7 @@ export class SessionManager implements ISessionManager {
     return { jwtRequired: true, externalId, jwt };
   }
 
-  private _upsertPayload(
+  private _sessionPayload(
     ids: SessionIds,
     sessionOrigin: SessionOriginValue,
   ): UpsertOrDeactivateSessionPayload {
@@ -67,7 +67,7 @@ export class SessionManager implements ISessionManager {
   }
 
   _notifySWToUpsertSession(ids: SessionIds, sessionOrigin: SessionOriginValue): Promise<void> {
-    const payload = this._upsertPayload(ids, sessionOrigin);
+    const payload = this._sessionPayload(ids, sessionOrigin);
     if (supportsServiceWorkers()) {
       Log._debug('SW upsert session');
       this._context._workerMessenger._unicast(WorkerMessengerCommand._SessionUpsert, payload);
@@ -80,16 +80,7 @@ export class SessionManager implements ISessionManager {
   }
 
   _notifySWToDeactivateSession(ids: SessionIds, sessionOrigin: SessionOriginValue): Promise<void> {
-    const payload: UpsertOrDeactivateSessionPayload = {
-      ...ids,
-      appId: this._context._appConfig.appId,
-      sessionThreshold: this._context._appConfig.sessionThreshold!,
-      enableSessionDuration: this._context._appConfig.enableSessionDuration!,
-      sessionOrigin,
-      isSafari: hasSafariWindow(),
-      outcomesConfig: this._context._appConfig.userConfig.outcomes!,
-      ...this._ivSessionCredentials(),
-    };
+    const payload = this._sessionPayload(ids, sessionOrigin);
     if (supportsServiceWorkers()) {
       Log._debug('SW deactivate session');
       this._context._workerMessenger._unicast(WorkerMessengerCommand._SessionDeactivate, payload);
@@ -177,16 +168,7 @@ export class SessionManager implements ISessionManager {
     try {
       // Little time before the page goes away, so the message skips the messenger.
       const ids = await this._getOneSignalAndSubscriptionIds();
-      const payload: UpsertOrDeactivateSessionPayload = {
-        ...ids,
-        appId: this._context._appConfig.appId,
-        sessionThreshold: this._context._appConfig.sessionThreshold!,
-        enableSessionDuration: this._context._appConfig.enableSessionDuration!,
-        sessionOrigin: SessionOrigin._PageHide,
-        isSafari: hasSafariWindow(),
-        outcomesConfig: this._context._appConfig.userConfig.outcomes!,
-        ...this._ivSessionCredentials(),
-      };
+      const payload = this._sessionPayload(ids, SessionOrigin._PageHide);
 
       Log._debug('SW deactivate (pagehide)');
       void this._context._workerMessenger._directPostMessageToSW(
@@ -259,7 +241,6 @@ export class SessionManager implements ISessionManager {
 
     if (supportsServiceWorkers()) {
       this._setupSessionEventListeners();
-      if (document.visibilityState === 'visible') this._startHeartbeat();
     } else {
       void OneSignal._emitter._emit(OneSignal.EVENTS.SESSION_STARTED);
     }
@@ -268,10 +249,12 @@ export class SessionManager implements ISessionManager {
   /**
    * The worker can be stopped while idle, so a visible tab drives the
    * heartbeat. Each visible tab ticks; the worker sends at most one request
-   * per interval across them.
+   * per interval across them. Called again once the feature flags refresh,
+   * since the first page load after the flag turns on reads the old list.
    */
   _startHeartbeat(): void {
-    if (this._heartbeatTimer || !supportsServiceWorkers()) return;
+    if (this._heartbeatTimer || document.visibilityState !== 'visible') return;
+    if (!OneSignal._cache.isVisibilityChangeEventSetup) return;
     if (!isFeatureEnabled(FeatureFlag._SessionsV2ApiCutover)) return;
     this._heartbeatTimer = setInterval(
       () => void this._sendHeartbeat(),
@@ -291,7 +274,7 @@ export class SessionManager implements ISessionManager {
       const ids = await this._getOneSignalAndSubscriptionIds();
       this._context._workerMessenger._unicast(
         WorkerMessengerCommand._SessionHeartbeat,
-        this._upsertPayload(ids, SessionOrigin._Heartbeat),
+        this._sessionPayload(ids, SessionOrigin._Heartbeat),
       );
     } catch (e) {
       Log._error('Heartbeat error:', e);
@@ -321,6 +304,8 @@ export class SessionManager implements ISessionManager {
       window.addEventListener('pagehide', () => void this._handlePageHide(), true);
       OneSignal._cache.isPageHideEventSetup = true;
     }
+
+    this._startHeartbeat();
   }
 
   _setupOnFocusAndOnBlurForSession(): void {
