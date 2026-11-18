@@ -27,6 +27,7 @@ import { getSubscription } from 'src/shared/database/subscription';
 import { FeatureFlag } from 'src/shared/features/featureFlags';
 import {
   deactivateSession,
+  sendSessionHeartbeat,
   serializeSessionRefresh,
   upsertSession,
 } from 'src/shared/helpers/service-worker';
@@ -38,7 +39,12 @@ import { SubscriptionManagerSW } from 'src/shared/managers/subscription/sw';
 import { DeliveryPlatformKind } from 'src/shared/models/DeliveryPlatformKind';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
-import { ONESIGNAL_SESSION_KEY, SessionOrigin, SessionStatus } from 'src/shared/session/constants';
+import {
+  HEARTBEAT_INTERVAL_SECONDS,
+  ONESIGNAL_SESSION_KEY,
+  SessionOrigin,
+  SessionStatus,
+} from 'src/shared/session/constants';
 import type {
   Session,
   SessionOriginValue,
@@ -1859,6 +1865,159 @@ describe('ServiceWorker', () => {
           const current = (await getCurrentSession())!;
           expect(current.status).toBe(SessionStatus._Inactive);
           expect(current.checkpointedDuration).toBeUndefined();
+        });
+      });
+
+      describe('sessions API heartbeat', () => {
+        const queued = async () =>
+          (await db.getAll('SessionRequests')).sort((a, b) => a.order - b.order);
+        // Active this long in the current focus, on top of the stored duration.
+        const activeSession = (
+          focusSeconds: number,
+          overrides: Partial<Session> = {},
+        ): Session => ({
+          ...session,
+          accumulatedDuration: 100,
+          lastActivatedTimestamp: Date.now() - focusSeconds * 1000,
+          sessionId: 'heartbeat-session',
+          usesSessionsApi: true,
+          onesignalId: 'started-user',
+          subscriptionId: 'started-subscription',
+          ...overrides,
+        });
+        const heartbeat = (payload: Partial<UpsertOrDeactivateSessionPayload> = {}) =>
+          sendSessionHeartbeat({
+            ...baseMessagePayload,
+            sessionOrigin: SessionOrigin._Heartbeat,
+            ...payload,
+          });
+
+        beforeEach(() => {
+          vi.mocked(drainSessionRequests).mockClear();
+        });
+
+        test('an interval of active time enqueues the cumulative duration without an end time', async () => {
+          await db.put('Sessions', activeSession(HEARTBEAT_INTERVAL_SECONDS));
+
+          await heartbeat();
+
+          const current = (await getCurrentSession())!;
+          expect(current.status).toBe(SessionStatus._Active);
+          expect(current.accumulatedDuration).toBe(100);
+          const [update, ...rest] = await queued();
+          expect(rest).toEqual([]);
+          expect(update).toMatchObject({
+            kind: 'update',
+            sessionId: 'heartbeat-session',
+            onesignalId: 'started-user',
+            subscriptionId: 'started-subscription',
+          });
+          expect(update).not.toHaveProperty('endTime', expect.anything());
+          const duration = current.checkpointedDuration!;
+          expect(duration).toBeGreaterThanOrEqual(100 + HEARTBEAT_INTERVAL_SECONDS);
+          expect(update).toMatchObject({ durationSeconds: duration });
+          expect(drainSessionRequests).toHaveBeenCalled();
+        });
+
+        test('a tick a little short of the interval still sends', async () => {
+          await db.put('Sessions', activeSession(HEARTBEAT_INTERVAL_SECONDS - 5));
+
+          await heartbeat();
+
+          expect(await queued()).toHaveLength(1);
+        });
+
+        test('ticks from several tabs within one interval send once', async () => {
+          await db.put('Sessions', activeSession(HEARTBEAT_INTERVAL_SECONDS));
+
+          await heartbeat();
+          await heartbeat();
+
+          expect(await queued()).toHaveLength(1);
+        });
+
+        test('the interval counts from the last duration sent', async () => {
+          await db.put(
+            'Sessions',
+            activeSession(HEARTBEAT_INTERVAL_SECONDS / 2, { checkpointedDuration: 100 }),
+          );
+          await heartbeat();
+          expect(await queued()).toEqual([]);
+
+          await db.put(
+            'Sessions',
+            activeSession(HEARTBEAT_INTERVAL_SECONDS, { checkpointedDuration: 100 }),
+          );
+          await heartbeat();
+          expect(await queued()).toHaveLength(1);
+        });
+
+        test('a hide right after a heartbeat sends no second update', async () => {
+          await db.put('Sessions', activeSession(HEARTBEAT_INTERVAL_SECONDS));
+          await heartbeat();
+          const sent = (await getCurrentSession())!.checkpointedDuration!;
+
+          vi.mocked(cancelableTimeout).mockReturnValueOnce({
+            promise: new Promise(() => {}),
+            cancel: vi.fn(),
+          });
+          await deactivateSession({
+            ...baseMessagePayload,
+            isSafari: false,
+            sessionOrigin: SessionOrigin._VisibilityHidden,
+          });
+
+          const updates = await queued();
+          // The hide lands in the same second as the heartbeat, so nothing grew.
+          expect(updates).toHaveLength(1);
+          expect((await getCurrentSession())!.checkpointedDuration).toBe(sent);
+        });
+
+        test.each<[string, Partial<Session>, Partial<UpsertOrDeactivateSessionPayload>]>([
+          ['an inactive session', { status: SessionStatus._Inactive }, {}],
+          ['a session on the legacy path', { usesSessionsApi: false }, {}],
+          [
+            'a session stored by an older SDK',
+            { sessionId: undefined, usesSessionsApi: undefined },
+            {},
+          ],
+          ['a session that still has local ids', { onesignalId: 'local-user' }, {}],
+          ['a page that sends no subscription type', {}, { subscriptionType: undefined }],
+        ])('%s sends no heartbeat', async (_, overrides, payload) => {
+          await db.put('Sessions', activeSession(HEARTBEAT_INTERVAL_SECONDS, overrides));
+
+          await heartbeat(payload);
+
+          expect(await queued()).toEqual([]);
+          expect(drainSessionRequests).not.toHaveBeenCalled();
+          expect((await getCurrentSession())!.checkpointedDuration).toBeUndefined();
+        });
+
+        test('no session: nothing to send', async () => {
+          await heartbeat();
+
+          expect(await queued()).toEqual([]);
+          expect(await getCurrentSession()).toBeNull();
+        });
+
+        test('the heartbeat message sends without the session debounce', async () => {
+          await db.put('Sessions', activeSession(HEARTBEAT_INTERVAL_SECONDS));
+          const cancel = vi.fn();
+          self.cancel = cancel;
+
+          self.dispatchEvent(
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionHeartbeat,
+              payload: {
+                ...baseMessagePayload,
+                sessionOrigin: SessionOrigin._Heartbeat,
+              } satisfies UpsertOrDeactivateSessionPayload,
+            }),
+          );
+          await flush();
+
+          expect(await queued()).toEqual([expect.objectContaining({ kind: 'update' })]);
+          expect(cancel).not.toHaveBeenCalled();
         });
       });
 

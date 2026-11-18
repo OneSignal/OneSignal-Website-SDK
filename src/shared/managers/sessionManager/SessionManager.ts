@@ -5,9 +5,10 @@ import type { IUpdateUser } from 'src/core/types/api';
 import { enforceAlias, enforceAppId } from 'src/shared/context/helpers';
 import type { ContextInterface } from 'src/shared/context/types';
 import { hasSafariWindow, supportsServiceWorkers } from 'src/shared/environment/detect';
+import { FeatureFlag, isFeatureEnabled } from 'src/shared/features/featureFlags';
 import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/network';
 import { isFirstPageView } from 'src/shared/helpers/pageview';
-import { SessionOrigin } from 'src/shared/session/constants';
+import { HEARTBEAT_INTERVAL_SECONDS, SessionOrigin } from 'src/shared/session/constants';
 import type {
   SessionOriginValue,
   SessionUser,
@@ -30,6 +31,7 @@ export class SessionManager implements ISessionManager {
   private _onSessionSent = false;
   private _onSessionChain: Promise<void> = Promise.resolve();
   private _sessionStarted = false;
+  private _heartbeatTimer: ReturnType<typeof setInterval> | undefined;
 
   constructor(context: ContextInterface) {
     this._context = context;
@@ -48,8 +50,11 @@ export class SessionManager implements ISessionManager {
     return { jwtRequired: true, externalId, jwt };
   }
 
-  _notifySWToUpsertSession(ids: SessionIds, sessionOrigin: SessionOriginValue): Promise<void> {
-    const payload: UpsertOrDeactivateSessionPayload = {
+  private _upsertPayload(
+    ids: SessionIds,
+    sessionOrigin: SessionOriginValue,
+  ): UpsertOrDeactivateSessionPayload {
+    return {
       ...ids,
       appId: this._context._appConfig.appId,
       sessionThreshold: this._context._appConfig.sessionThreshold || 0,
@@ -59,6 +64,10 @@ export class SessionManager implements ISessionManager {
       outcomesConfig: this._context._appConfig.userConfig.outcomes!,
       ...this._ivSessionCredentials(),
     };
+  }
+
+  _notifySWToUpsertSession(ids: SessionIds, sessionOrigin: SessionOriginValue): Promise<void> {
+    const payload = this._upsertPayload(ids, sessionOrigin);
     if (supportsServiceWorkers()) {
       Log._debug('SW upsert session');
       this._context._workerMessenger._unicast(WorkerMessengerCommand._SessionUpsert, payload);
@@ -111,6 +120,9 @@ export class SessionManager implements ISessionManager {
   }
 
   async _handleVisibilityChange(): Promise<void> {
+    if (document.visibilityState === 'visible') this._startHeartbeat();
+    else this._stopHeartbeat();
+
     await LoginManager._switchingUsersPromise;
 
     if (!User._singletonInstance?.onesignalId) {
@@ -155,6 +167,7 @@ export class SessionManager implements ISessionManager {
   }
 
   async _handlePageHide(): Promise<void> {
+    this._stopHeartbeat();
     await LoginManager._switchingUsersPromise;
 
     if (!User._singletonInstance?.onesignalId) {
@@ -246,8 +259,42 @@ export class SessionManager implements ISessionManager {
 
     if (supportsServiceWorkers()) {
       this._setupSessionEventListeners();
+      if (document.visibilityState === 'visible') this._startHeartbeat();
     } else {
       void OneSignal._emitter._emit(OneSignal.EVENTS.SESSION_STARTED);
+    }
+  }
+
+  /**
+   * The worker can be stopped while idle, so a visible tab drives the
+   * heartbeat. Each visible tab ticks; the worker sends at most one request
+   * per interval across them.
+   */
+  _startHeartbeat(): void {
+    if (this._heartbeatTimer || !supportsServiceWorkers()) return;
+    if (!isFeatureEnabled(FeatureFlag._SessionsV2ApiCutover)) return;
+    this._heartbeatTimer = setInterval(
+      () => void this._sendHeartbeat(),
+      HEARTBEAT_INTERVAL_SECONDS * 1000,
+    );
+  }
+
+  _stopHeartbeat(): void {
+    clearInterval(this._heartbeatTimer);
+    this._heartbeatTimer = undefined;
+  }
+
+  private async _sendHeartbeat(): Promise<void> {
+    await LoginManager._switchingUsersPromise;
+    if (document.visibilityState !== 'visible' || !User._singletonInstance?.onesignalId) return;
+    try {
+      const ids = await this._getOneSignalAndSubscriptionIds();
+      this._context._workerMessenger._unicast(
+        WorkerMessengerCommand._SessionHeartbeat,
+        this._upsertPayload(ids, SessionOrigin._Heartbeat),
+      );
+    } catch (e) {
+      Log._error('Heartbeat error:', e);
     }
   }
 

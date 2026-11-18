@@ -14,6 +14,7 @@ import { FeatureFlag, isFeatureEnabledInWorker } from 'src/shared/features/featu
 import { delay, redactJwt } from 'src/shared/helpers/general';
 import {
   deactivateSession,
+  sendSessionHeartbeat,
   serializeSessionRefresh,
   upsertSession,
 } from 'src/shared/helpers/service-worker';
@@ -117,6 +118,14 @@ export function run() {
       case WorkerMessengerCommand._SessionDeactivate:
         Log._debug('[SW] SessionDeactivate');
         debounceRefreshSession(event, payload as UpsertOrDeactivateSessionPayload);
+        break;
+      case WorkerMessengerCommand._SessionHeartbeat:
+        Log._debug('[SW] SessionHeartbeat');
+        event.waitUntil(
+          sendSessionHeartbeat(payload as UpsertOrDeactivateSessionPayload).catch((e) =>
+            Log._error('[SW] heartbeat failed', e),
+          ),
+        );
         break;
       default:
         return;

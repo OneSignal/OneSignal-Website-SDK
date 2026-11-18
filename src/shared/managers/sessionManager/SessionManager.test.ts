@@ -14,12 +14,22 @@ import { http, HttpResponse } from 'msw';
 import LoginManager from 'src/page/managers/LoginManager';
 import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import * as detect from 'src/shared/environment/detect';
-import { setJwtRequirement } from 'src/shared/helpers/localStorage';
+import { FeatureFlag } from 'src/shared/features/featureFlags';
+import { setFeatureFlags, setJwtRequirement } from 'src/shared/helpers/localStorage';
 import { setPageViewCount } from 'src/shared/helpers/pageview';
 import Log from 'src/shared/libraries/Log';
-import { SessionOrigin } from 'src/shared/session/constants';
+import { WorkerMessengerCommand } from 'src/shared/libraries/workerMessenger/constants';
+import { HEARTBEAT_INTERVAL_SECONDS, SessionOrigin } from 'src/shared/session/constants';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
-import { beforeEach, describe, expect, test, vi, type MockInstance } from 'vite-plus/test';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from 'vite-plus/test';
 
 import User from '../../../onesignal/User';
 import { SessionManager } from './SessionManager';
@@ -257,6 +267,129 @@ describe('SessionManager', () => {
       await sm._handleOnBlur(new Event('blur'));
       expect(notifySpy).not.toHaveBeenCalled();
       expect(deactSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('heartbeat', () => {
+    const INTERVAL_MS = HEARTBEAT_INTERVAL_SECONDS * 1000;
+    let sm: SessionManager;
+    let unicastSpy: MockInstance;
+    const visibility = (state: DocumentVisibilityState) =>
+      vi.spyOn(document, 'visibilityState', 'get').mockReturnValue(state);
+    const heartbeats = () =>
+      unicastSpy.mock.calls.filter(
+        ([command]) => command === WorkerMessengerCommand._SessionHeartbeat,
+      );
+
+    beforeEach(() => {
+      TestEnvironment.initialize();
+      // Its poll can start late, and would then tick every few ms of the faked interval.
+      const operationRepo = OneSignal._coreDirector._operationRepo;
+      operationRepo._pause();
+      vi.spyOn(
+        operationRepo as unknown as { _processQueueForever(): void },
+        '_processQueueForever',
+      ).mockImplementation(() => undefined);
+      vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+      User._createOrGetInstance();
+      supportsServiceWorkersSpy.mockReturnValue(true);
+      setFeatureFlags([FeatureFlag._SessionsV2ApiCutover]);
+      sm = new SessionManager(OneSignal._context);
+      vi.spyOn(sm, '_getOneSignalAndSubscriptionIds').mockResolvedValue({
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: SUB_ID,
+      });
+      vi.spyOn(sm, '_notifySWToUpsertSession').mockResolvedValue(undefined);
+      vi.spyOn(sm, '_notifySWToDeactivateSession').mockResolvedValue(undefined);
+      unicastSpy = vi
+        .spyOn(OneSignal._context._workerMessenger, '_unicast')
+        .mockReturnValue(undefined);
+      visibility('visible');
+    });
+
+    afterEach(() => {
+      sm._stopHeartbeat();
+      setFeatureFlags([]);
+      vi.useRealTimers();
+    });
+
+    test('a visible page asks the worker for a heartbeat every interval', async () => {
+      await sm._upsertSession(SessionOrigin._UserCreate);
+
+      await vi.advanceTimersByTimeAsync(INTERVAL_MS - 1);
+      expect(heartbeats()).toHaveLength(0);
+
+      await vi.advanceTimersByTimeAsync(1);
+      expect(heartbeats()).toEqual([
+        [
+          WorkerMessengerCommand._SessionHeartbeat,
+          expect.objectContaining({
+            onesignalId: ONESIGNAL_ID,
+            subscriptionId: SUB_ID,
+            sessionOrigin: SessionOrigin._Heartbeat,
+          }),
+        ],
+      ]);
+
+      await vi.advanceTimersByTimeAsync(INTERVAL_MS);
+      expect(heartbeats()).toHaveLength(2);
+    });
+
+    test('hiding the page stops the timer, and showing it restarts the interval', async () => {
+      await sm._upsertSession(SessionOrigin._UserCreate);
+      await vi.advanceTimersByTimeAsync(INTERVAL_MS / 2);
+
+      visibility('hidden');
+      await sm._handleVisibilityChange();
+      await vi.advanceTimersByTimeAsync(INTERVAL_MS);
+      expect(heartbeats()).toHaveLength(0);
+
+      visibility('visible');
+      await sm._handleVisibilityChange();
+      await vi.advanceTimersByTimeAsync(INTERVAL_MS - 1);
+      expect(heartbeats()).toHaveLength(0);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(heartbeats()).toHaveLength(1);
+    });
+
+    test('a pagehide stops the timer', async () => {
+      await sm._upsertSession(SessionOrigin._UserCreate);
+
+      await sm._handlePageHide();
+      await vi.advanceTimersByTimeAsync(INTERVAL_MS);
+
+      expect(heartbeats()).toHaveLength(0);
+    });
+
+    test('a page that starts hidden has no timer', async () => {
+      visibility('hidden');
+      await sm._upsertSession(SessionOrigin._UserCreate);
+
+      await vi.advanceTimersByTimeAsync(INTERVAL_MS);
+
+      expect(heartbeats()).toHaveLength(0);
+    });
+
+    test('repeated visible events keep one timer', async () => {
+      await sm._upsertSession(SessionOrigin._UserCreate);
+      await sm._handleVisibilityChange();
+      await sm._handleVisibilityChange();
+
+      await vi.advanceTimersByTimeAsync(INTERVAL_MS);
+
+      expect(heartbeats()).toHaveLength(1);
+    });
+
+    test('flag off: no timer', async () => {
+      setFeatureFlags([]);
+      const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
+
+      await sm._upsertSession(SessionOrigin._UserCreate);
+      await sm._handleVisibilityChange();
+      await vi.advanceTimersByTimeAsync(INTERVAL_MS);
+
+      expect(setIntervalSpy).not.toHaveBeenCalledWith(expect.any(Function), INTERVAL_MS);
+      expect(heartbeats()).toHaveLength(0);
     });
   });
 

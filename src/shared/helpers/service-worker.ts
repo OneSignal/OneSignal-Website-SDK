@@ -13,7 +13,11 @@ import Log from '../libraries/Log';
 import { IDManager } from '../managers/IDManager';
 import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
-import { SessionStatus } from '../session/constants';
+import {
+  HEARTBEAT_INTERVAL_SECONDS,
+  HEARTBEAT_SLACK_SECONDS,
+  SessionStatus,
+} from '../session/constants';
 import { initializeNewSession, isBackgroundOrigin } from '../session/helpers';
 import type { Session, SessionUser, UpsertOrDeactivateSessionPayload } from '../session/types';
 import { getBaseUrl } from './general';
@@ -301,12 +305,42 @@ async function enqueueCheckpoint(
   return true;
 }
 
+/**
+ * Sends the duration of an active session once it has grown a heartbeat
+ * interval past the last duration sent. Every visible tab ticks, so this
+ * check is what keeps it to one request per interval across tabs.
+ */
+export async function sendSessionHeartbeat(
+  options: UpsertOrDeactivateSessionPayload,
+): Promise<void> {
+  const session = await getCurrentSession();
+  if (session?.status !== SessionStatus._Active) return;
+
+  const duration =
+    session.accumulatedDuration +
+    timeInSecondsBetweenTimestamps(Date.now(), session.lastActivatedTimestamp);
+  // Page timers start before the worker's debounced activation, so a tick
+  // can land a little short of a full interval.
+  const due =
+    (session.checkpointedDuration ?? 0) + HEARTBEAT_INTERVAL_SECONDS - HEARTBEAT_SLACK_SECONDS;
+  if (duration < due) return;
+
+  const heartbeat = { ...session, accumulatedDuration: duration, checkpointedDuration: duration };
+  if (!(await enqueueDurationUpdate(options, heartbeat))) return;
+  if (!(await saveCheckpointedDuration(heartbeat))) return;
+  await drainSessionRequests();
+}
+
 // A finalize can delete the row during the enqueue. Writing the row read
 // before it would restore an ended session, so only the field is saved.
 async function saveCheckpointedDuration(session: Session): Promise<boolean> {
   const current = await getCurrentSession();
   if (!current || current.startTimestamp !== session.startTimestamp) return false;
-  current.checkpointedDuration = session.checkpointedDuration;
+  // A checkpoint and a heartbeat can overlap; the larger one was sent last.
+  current.checkpointedDuration = Math.max(
+    current.checkpointedDuration ?? 0,
+    session.checkpointedDuration ?? 0,
+  );
   await db.put('Sessions', current);
   return true;
 }
