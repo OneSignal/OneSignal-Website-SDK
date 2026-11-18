@@ -49,17 +49,14 @@ let sessionRefreshTail: Promise<unknown> = Promise.resolve();
  * messages, so an in-memory chain is enough. A refresh runs even if the one
  * before it failed.
  */
-function serializeSessionRefresh<T>(fn: () => Promise<T>): Promise<T> {
+export function serializeSessionRefresh<T>(fn: () => Promise<T>): Promise<T> {
   const run = sessionRefreshTail.then(fn, fn);
   sessionRefreshTail = run;
   return run;
 }
 
-export function upsertSession(options: UpsertOrDeactivateSessionPayload): Promise<void> {
-  return serializeSessionRefresh(() => upsertSessionNow(options));
-}
-
-async function upsertSessionNow(options: UpsertOrDeactivateSessionPayload): Promise<void> {
+// Call through serializeSessionRefresh.
+export async function upsertSession(options: UpsertOrDeactivateSessionPayload): Promise<void> {
   const { appId } = options;
   const existingSession = await getCurrentSession();
 
@@ -214,13 +211,8 @@ function hasLocalId(...ids: (string | undefined)[]): boolean {
   return ids.some((id) => IDManager._isLocalId(id));
 }
 
-export function deactivateSession(
-  options: UpsertOrDeactivateSessionPayload,
-): Promise<CancelableTimeoutPromise | undefined> {
-  return serializeSessionRefresh(() => deactivateSessionNow(options));
-}
-
-async function deactivateSessionNow(
+// Call through serializeSessionRefresh.
+export async function deactivateSession(
   options: UpsertOrDeactivateSessionPayload,
 ): Promise<CancelableTimeoutPromise | undefined> {
   const { sessionThreshold: thresholdInSeconds } = options;

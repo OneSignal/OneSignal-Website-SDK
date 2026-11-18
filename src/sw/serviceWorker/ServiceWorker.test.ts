@@ -1453,13 +1453,22 @@ describe('ServiceWorker', () => {
             ),
           );
           await db.put('Sessions', apiSession());
-          const user = { ...baseMessagePayload, isSafari: false, sessionThreshold: 30 };
+          const upsertMessage = () =>
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionUpsert,
+              payload: {
+                ...baseMessagePayload,
+                isSafari: false,
+                sessionThreshold: 30,
+              } satisfies UpsertOrDeactivateSessionPayload,
+            });
 
-          const first = upsertSession(user);
+          await dispatchEvent(upsertMessage());
           await vi.waitUntil(() => updateUserFn.mock.calls.length === 1, { interval: 1 });
-          const second = upsertSession(user);
+          await dispatchEvent(upsertMessage());
           releaseSessionTime();
-          await Promise.all([first, second]);
+          await vi.waitUntil(() => updateUserFn.mock.calls.length >= 2, { interval: 1 });
+          await flush();
           await db.delete('Options', 'featureFlags');
 
           const deltas = updateUserFn.mock.calls.map(([body]) => Object.keys(body.deltas)[0]);
