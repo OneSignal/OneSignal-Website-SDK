@@ -209,12 +209,14 @@ export async function deactivateSession(
   // The finalize step reuses this payload after the threshold, so a token the
   // page refreshes in that window is not used for the session_time request.
   // The caller stores this timer's cancel only once deactivate returns, so an
-  // upsert that arrives meanwhile cannot cancel it. The stored row is the truth.
+  // upsert that arrives meanwhile cannot cancel it. The stored row is the truth:
+  // a session that resumed and went inactive again has a newer deactivate time.
   const finalizeSWSession = async () => {
     const current = await getCurrentSession();
     if (
       current?.status !== SessionStatus._Inactive ||
-      current.startTimestamp !== existingSession.startTimestamp
+      current.startTimestamp !== existingSession.startTimestamp ||
+      current.lastDeactivatedTimestamp !== existingSession.lastDeactivatedTimestamp
     ) {
       Log._debug('Finalize skipped, session resumed or replaced');
       return;
@@ -230,7 +232,7 @@ export async function deactivateSession(
   if (existingSession.status === SessionStatus._Inactive) {
     // A blur made the session inactive without a checkpoint; the tab hiding later does.
     if (await enqueueCheckpoint(options, existingSession)) {
-      await db.put('Sessions', existingSession);
+      if (!(await saveCheckpointedDuration(existingSession))) return undefined;
       void drainSessionRequests();
     }
     return cancelableTimeout(finalizeSWSession, thresholdInSeconds);
@@ -278,6 +280,16 @@ async function enqueueCheckpoint(
   if (session.accumulatedDuration <= (session.checkpointedDuration ?? 0)) return false;
   if (!(await enqueueDurationUpdate(options, session))) return false;
   session.checkpointedDuration = session.accumulatedDuration;
+  return true;
+}
+
+// A finalize can delete the row during the enqueue. Writing the row read
+// before it would restore an ended session, so only the field is saved.
+async function saveCheckpointedDuration(session: Session): Promise<boolean> {
+  const current = await getCurrentSession();
+  if (!current || current.startTimestamp !== session.startTimestamp) return false;
+  current.checkpointedDuration = session.checkpointedDuration;
+  await db.put('Sessions', current);
   return true;
 }
 

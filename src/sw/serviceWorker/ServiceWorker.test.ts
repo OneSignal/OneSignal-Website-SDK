@@ -1358,6 +1358,33 @@ describe('ServiceWorker', () => {
           );
         });
 
+        test('a session that resumed and went inactive again is not ended by the older finalize', async () => {
+          await db.put(
+            'Sessions',
+            apiSession({
+              status: SessionStatus._Active,
+              lastActivatedTimestamp: Date.now() - 5_000,
+              lastDeactivatedTimestamp: null,
+            }),
+          );
+          let staleFinalize: (() => Promise<void>) | undefined;
+          vi.mocked(cancelableTimeout).mockImplementationOnce((callback) => {
+            staleFinalize = callback;
+            return { promise: Promise.resolve(), cancel: vi.fn() };
+          });
+
+          await deactivateSession({ ...baseMessagePayload, isSafari: false });
+          const firstInactive = (await getCurrentSession())!;
+          await db.put('Sessions', {
+            ...firstInactive,
+            lastDeactivatedTimestamp: firstInactive.lastDeactivatedTimestamp! + 1_000,
+          });
+          await staleFinalize!();
+
+          expect(await getCurrentSession()).toMatchObject({ sessionId: 'ending-session' });
+          expect((await queued()).filter((r) => r.kind === 'update' && r.endTime)).toEqual([]);
+        });
+
         test('replaces an unsent update and keeps the highest duration', async () => {
           await db.put('Sessions', apiSession());
           await enqueueSessionUpdate({
@@ -1576,6 +1603,62 @@ describe('ServiceWorker', () => {
 
           expect(await queued()).toEqual([expect.objectContaining({ kind: 'update' })]);
           expect((await queued())[0]).not.toHaveProperty('endTime', expect.anything());
+        });
+
+        test('a blur that cancels the Safari visibility poll of a hide still checkpoints', async () => {
+          await db.put('Sessions', activeSession());
+          matchAllFn
+            .mockResolvedValueOnce([unfocusedClient])
+            .mockResolvedValueOnce([unfocusedClient]);
+          const realTimeout = vi.mocked(cancelableTimeout).getMockImplementation()!;
+          vi.mocked(cancelableTimeout)
+            .mockImplementationOnce(realTimeout)
+            .mockReturnValueOnce({ promise: new Promise(() => {}), cancel: vi.fn() })
+            .mockImplementationOnce(realTimeout)
+            .mockImplementationOnce(realTimeout)
+            .mockReturnValueOnce({ promise: new Promise(() => {}), cancel: vi.fn() });
+          const message = (sessionOrigin: SessionOriginValue) =>
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionDeactivate,
+              payload: {
+                ...baseMessagePayload,
+                isSafari: true,
+                sessionOrigin,
+              } satisfies UpsertOrDeactivateSessionPayload,
+            });
+
+          await dispatchEvent(message(SessionOrigin._VisibilityHidden));
+          expect((await getCurrentSession())!.status).toBe(SessionStatus._Active);
+          await dispatchEvent(message(SessionOrigin._Blur));
+
+          expect((await getCurrentSession())!.status).toBe(SessionStatus._Inactive);
+          expect(await queued()).toEqual([expect.objectContaining({ kind: 'update' })]);
+        });
+
+        test('a hide does not restore a session that finalize deleted during the enqueue', async () => {
+          await db.put(
+            'Sessions',
+            activeSession({
+              status: SessionStatus._Inactive,
+              lastDeactivatedTimestamp: Date.now(),
+            }),
+          );
+          const locks = navigator.locks;
+          const request = locks.request.bind(locks) as (
+            name: string,
+            fn: () => Promise<unknown>,
+          ) => Promise<unknown>;
+          vi.spyOn(locks, 'request').mockImplementationOnce((async (
+            name: string,
+            fn: () => Promise<unknown>,
+          ) => {
+            await db.delete('Sessions', ONESIGNAL_SESSION_KEY);
+            return request(name, fn);
+          }) as typeof locks.request);
+
+          await expect(deactivate()).resolves.toBeUndefined();
+
+          expect(await getCurrentSession()).toBeNull();
         });
 
         test('no checkpoint when the duration has not grown since the last one', async () => {
