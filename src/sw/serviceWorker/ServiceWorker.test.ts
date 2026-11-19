@@ -25,7 +25,11 @@ import {
 } from 'src/shared/database/notifications';
 import { getSubscription } from 'src/shared/database/subscription';
 import { FeatureFlag } from 'src/shared/features/featureFlags';
-import { deactivateSession, upsertSession } from 'src/shared/helpers/service-worker';
+import {
+  deactivateSession,
+  serializeSessionRefresh,
+  upsertSession,
+} from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
 import { WorkerMessengerCommand } from 'src/shared/libraries/workerMessenger/constants';
 import { WorkerMessengerSW } from 'src/shared/libraries/workerMessenger/sw';
@@ -1480,6 +1484,61 @@ describe('ServiceWorker', () => {
           ]);
         });
 
+        test('a finalize that fires during an upsert waits for it and does not end the session twice', async () => {
+          let releaseSessionTime!: () => void;
+          const sessionTimeHeld = new Promise<void>((resolve) => (releaseSessionTime = resolve));
+          server.use(
+            http.patch(
+              `**/apps/${appId}/users/by/onesignal_id/${ONESIGNAL_ID}`,
+              async ({ request }) => {
+                const body = (await request.json()) as { deltas: Record<string, number> };
+                updateUserFn(body);
+                if (body.deltas.session_time !== undefined) await sessionTimeHeld;
+                return HttpResponse.json({});
+              },
+            ),
+          );
+          await db.put('Sessions', apiSession());
+          let finalize: (() => Promise<void>) | undefined;
+          vi.mocked(cancelableTimeout).mockImplementationOnce((callback) => {
+            finalize = callback;
+            return { promise: Promise.resolve(), cancel: vi.fn() };
+          });
+          await deactivateSession({
+            ...baseMessagePayload,
+            isSafari: false,
+            sessionOrigin: SessionOrigin._Blur,
+          });
+
+          await dispatchEvent(
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionUpsert,
+              payload: {
+                ...baseMessagePayload,
+                isSafari: false,
+                sessionThreshold: 30,
+              } satisfies UpsertOrDeactivateSessionPayload,
+            }),
+          );
+          await vi.waitUntil(() => updateUserFn.mock.calls.length === 1, { interval: 1 });
+          const finalized = finalize!();
+          releaseSessionTime();
+          await finalized;
+
+          const deltas = updateUserFn.mock.calls.map(([body]) => Object.keys(body.deltas)[0]);
+          expect(deltas).toEqual(['session_time', 'session_count']);
+          expect((await queued()).filter((r) => r.kind === 'update')).toHaveLength(1);
+          expect((await getCurrentSession())!.status).toBe(SessionStatus._Active);
+        });
+
+        test('a refresh still runs after the one before it rejects', async () => {
+          const failed = serializeSessionRefresh(() => Promise.reject(new Error('refresh failed')));
+          const next = serializeSessionRefresh(() => Promise.resolve('ran'));
+
+          await expect(failed).rejects.toThrow('refresh failed');
+          await expect(next).resolves.toBe('ran');
+        });
+
         test('an active session ends at the deactivate time with the duration it adds', async () => {
           const activatedAt = Date.now() - 5_000;
           await db.put(
@@ -1679,6 +1738,49 @@ describe('ServiceWorker', () => {
 
           expect((await getCurrentSession())!.status).toBe(SessionStatus._Inactive);
           expect(await queued()).toEqual([expect.objectContaining({ kind: 'update' })]);
+        });
+
+        // A tab hides while another tab has focus, then the user leaves for another app.
+        test('a blur queued behind a hide that found a focused tab is not taken as a hide', async () => {
+          await db.put(
+            'Sessions',
+            activeSession({
+              status: SessionStatus._Inactive,
+              lastDeactivatedTimestamp: Date.now(),
+              accumulatedDuration: 20,
+              checkpointedDuration: 10,
+            }),
+          );
+          let releaseRead!: () => void;
+          const readHeld = new Promise<void>((resolve) => (releaseRead = resolve));
+          const get = db.get.bind(db);
+          vi.spyOn(db, 'get').mockImplementationOnce((async (...args: Parameters<typeof get>) => {
+            await readHeld;
+            return get(...args);
+          }) as typeof db.get);
+          matchAllFn.mockResolvedValueOnce([mockClient]).mockResolvedValueOnce([unfocusedClient]);
+          const debounce = vi.mocked(cancelableTimeout).getMockImplementation()!;
+          vi.mocked(cancelableTimeout)
+            .mockImplementationOnce(debounce)
+            .mockImplementationOnce(debounce)
+            .mockReturnValueOnce({ promise: new Promise(() => {}), cancel: vi.fn() });
+          const message = (sessionOrigin: SessionOriginValue) =>
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionDeactivate,
+              payload: {
+                ...baseMessagePayload,
+                isSafari: false,
+                sessionOrigin,
+              } satisfies UpsertOrDeactivateSessionPayload,
+            });
+
+          await dispatchEvent(message(SessionOrigin._VisibilityHidden));
+          await dispatchEvent(message(SessionOrigin._Blur));
+          releaseRead();
+          await flush();
+
+          expect((await getCurrentSession())!.status).toBe(SessionStatus._Inactive);
+          expect(await queued()).toEqual([]);
         });
 
         test('a hide does not restore a session that finalize deleted during the enqueue', async () => {
