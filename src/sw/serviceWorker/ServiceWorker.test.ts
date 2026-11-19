@@ -1896,6 +1896,10 @@ describe('ServiceWorker', () => {
           vi.mocked(drainSessionRequests).mockClear();
         });
 
+        afterEach(() => {
+          vi.useRealTimers();
+        });
+
         test('an interval of active time enqueues the cumulative duration without an end time', async () => {
           await db.put('Sessions', activeSession(HEARTBEAT_INTERVAL_SECONDS));
 
@@ -1985,6 +1989,7 @@ describe('ServiceWorker', () => {
         });
 
         test('a hide right after a heartbeat sends no second update', async () => {
+          vi.useFakeTimers({ toFake: ['Date'] });
           await db.put('Sessions', activeSession(HEARTBEAT_INTERVAL_SECONDS));
           await heartbeat();
           const sent = (await getCurrentSession())!.checkpointedDuration!;
@@ -2000,7 +2005,6 @@ describe('ServiceWorker', () => {
           });
 
           const updates = await queued();
-          // The hide lands in the same second as the heartbeat, so nothing grew.
           expect(updates).toHaveLength(1);
           expect((await getCurrentSession())!.checkpointedDuration).toBe(sent);
         });

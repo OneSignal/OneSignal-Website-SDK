@@ -251,15 +251,20 @@ export class SessionManager implements ISessionManager {
    * heartbeat. Each visible tab ticks; the worker sends at most one request
    * per interval across them. Ticks once on start too, since a timer restarts
    * on every page load and tab switch and might never reach a full interval.
-   * Called again once the feature flags refresh, since the first page load
-   * after the flag turns on reads the old list. Gated on the live flag, so a
+   * Called again once the feature flags refresh, which can start or stop it,
+   * since a page load reads the cached list. Gated on the live flag, so a
    * rollback also stops heartbeats for sessions already on the sessions API;
    * their checkpoints and end still carry the full duration.
    */
   _startHeartbeat(): void {
-    if (this._heartbeatTimer || document.visibilityState !== 'visible') return;
-    if (!OneSignal._cache.isVisibilityChangeEventSetup) return;
-    if (!isFeatureEnabled(FeatureFlag._SessionsV2ApiCutover)) return;
+    if (!isFeatureEnabled(FeatureFlag._SessionsV2ApiCutover)) return this._stopHeartbeat();
+    if (
+      this._heartbeatTimer ||
+      document.visibilityState !== 'visible' ||
+      !OneSignal._cache.isVisibilityChangeEventSetup
+    ) {
+      return;
+    }
     this._heartbeatTimer = setInterval(
       () => void this._sendHeartbeat(),
       HEARTBEAT_INTERVAL_SECONDS * 1000,

@@ -401,6 +401,18 @@ describe('SessionManager', () => {
       expect(heartbeats()).toHaveLength(2);
     });
 
+    test('a flag that turns off on refresh stops a running timer', async () => {
+      await sm._upsertSession(SessionOrigin._UserCreate);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(heartbeats()).toHaveLength(1);
+
+      setFeatureFlags([]);
+      sm._startHeartbeat();
+      await vi.advanceTimersByTimeAsync(INTERVAL_MS * 2);
+
+      expect(heartbeats()).toHaveLength(1);
+    });
+
     test('no timer before session listeners are set up', async () => {
       OneSignal._cache.isVisibilityChangeEventSetup = false;
       sm._startHeartbeat();
