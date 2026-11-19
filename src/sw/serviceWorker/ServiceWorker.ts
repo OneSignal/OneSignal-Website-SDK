@@ -12,7 +12,11 @@ import { getSubscription } from 'src/shared/database/subscription';
 import { getDeviceType } from 'src/shared/environment/detect';
 import { FeatureFlag, isFeatureEnabledInWorker } from 'src/shared/features/featureFlags';
 import { delay, redactJwt } from 'src/shared/helpers/general';
-import { deactivateSession, upsertSession } from 'src/shared/helpers/service-worker';
+import {
+  deactivateSession,
+  serializeSessionRefresh,
+  upsertSession,
+} from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
 import {
   type NotificationWillDisplayResponsePayload,
@@ -44,7 +48,7 @@ import { getBrowserName } from 'src/shared/useragent/detect';
 import { VERSION } from 'src/shared/utils/env';
 import { drainSessionRequests } from 'src/sw/sessionRequests/sender';
 
-import { cancelableTimeout } from '../helpers/CancelableTimeout';
+import { cancelableTimeout, type CancelableTimeoutPromise } from '../helpers/CancelableTimeout';
 import { inlineImage } from '../helpers/inlineImage';
 import {
   isValidPayload,
@@ -410,14 +414,12 @@ async function updateSessionBasedOnHasActive(
   hasAnyActiveSessions: boolean,
   options: UpsertOrDeactivateSessionPayload,
 ) {
-  if (hasAnyActiveSessions) {
-    await upsertSession(options);
-  } else {
-    const cancelableFinalize = await deactivateSession(options);
-    if (cancelableFinalize) {
-      self.cancel = cancelableFinalize.cancel;
-      event.waitUntil(cancelableFinalize.promise);
-    }
+  const cancelableFinalize = await serializeSessionRefresh<CancelableTimeoutPromise | void>(() =>
+    hasAnyActiveSessions ? upsertSession(options) : deactivateSession(options),
+  );
+  if (cancelableFinalize) {
+    self.cancel = cancelableFinalize.cancel;
+    event.waitUntil(cancelableFinalize.promise);
   }
   debouncedBackgroundOrigin = undefined;
 }

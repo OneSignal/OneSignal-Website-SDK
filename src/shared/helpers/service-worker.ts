@@ -40,6 +40,22 @@ function appendServiceWorkerParams(
   return `${fullPath}?${appIdAsQueryParam}&${sdkVersionAsQueryParam}`;
 }
 
+let sessionRefreshTail: Promise<unknown> = Promise.resolve();
+
+/**
+ * Runs session refreshes one at a time. The debounce only cancels a refresh that
+ * has not started, so two refreshes could otherwise both finalize the same
+ * expired session and each start a new one. One worker handles every tab's
+ * messages, so an in-memory chain is enough. A refresh runs even if the one
+ * before it failed.
+ */
+export function serializeSessionRefresh<T>(fn: () => Promise<T>): Promise<T> {
+  const run = sessionRefreshTail.then(fn, fn);
+  sessionRefreshTail = run;
+  return run;
+}
+
+// Call through serializeSessionRefresh.
 export async function upsertSession(options: UpsertOrDeactivateSessionPayload): Promise<void> {
   const { appId } = options;
   const existingSession = await getCurrentSession();
@@ -195,6 +211,7 @@ function hasLocalId(...ids: (string | undefined)[]): boolean {
   return ids.some((id) => IDManager._isLocalId(id));
 }
 
+// Call through serializeSessionRefresh.
 export async function deactivateSession(
   options: UpsertOrDeactivateSessionPayload,
 ): Promise<CancelableTimeoutPromise | undefined> {
@@ -211,18 +228,19 @@ export async function deactivateSession(
   // The caller stores this timer's cancel only once deactivate returns, so an
   // upsert that arrives meanwhile cannot cancel it. The stored row is the truth:
   // a session that resumed and went inactive again has a newer deactivate time.
-  const finalizeSWSession = async () => {
-    const current = await getCurrentSession();
-    if (
-      current?.status !== SessionStatus._Inactive ||
-      current.startTimestamp !== existingSession.startTimestamp ||
-      current.lastDeactivatedTimestamp !== existingSession.lastDeactivatedTimestamp
-    ) {
-      Log._debug('Finalize skipped, session resumed or replaced');
-      return;
-    }
-    if (await finalizeSession(options, current)) await drainSessionRequests();
-  };
+  const finalizeSWSession = () =>
+    serializeSessionRefresh(async () => {
+      const current = await getCurrentSession();
+      if (
+        current?.status !== SessionStatus._Inactive ||
+        current.startTimestamp !== existingSession.startTimestamp ||
+        current.lastDeactivatedTimestamp !== existingSession.lastDeactivatedTimestamp
+      ) {
+        Log._debug('Finalize skipped, session resumed or replaced');
+        return;
+      }
+      if (await finalizeSession(options, current)) await drainSessionRequests();
+    });
 
   /**
    * For 2 subsequent deactivate requests we need to make sure there is an active finalization timeout.

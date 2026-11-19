@@ -1434,6 +1434,52 @@ describe('ServiceWorker', () => {
           expect(sessionsAtDrain.every((id) => id === current.sessionId)).toBe(true);
         });
 
+        test('two overlapping upserts on an expired session end it and start the next once', async () => {
+          await db.put('Options', {
+            key: 'featureFlags',
+            value: JSON.stringify([FeatureFlag._SessionsV2ApiCutover]),
+          });
+          let releaseSessionTime!: () => void;
+          const sessionTimeHeld = new Promise<void>((resolve) => (releaseSessionTime = resolve));
+          server.use(
+            http.patch(
+              `**/apps/${appId}/users/by/onesignal_id/${ONESIGNAL_ID}`,
+              async ({ request }) => {
+                const body = (await request.json()) as { deltas: Record<string, number> };
+                updateUserFn(body);
+                if (body.deltas.session_time !== undefined) await sessionTimeHeld;
+                return HttpResponse.json({});
+              },
+            ),
+          );
+          await db.put('Sessions', apiSession());
+          const upsertMessage = () =>
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionUpsert,
+              payload: {
+                ...baseMessagePayload,
+                isSafari: false,
+                sessionThreshold: 30,
+              } satisfies UpsertOrDeactivateSessionPayload,
+            });
+
+          await dispatchEvent(upsertMessage());
+          await vi.waitUntil(() => updateUserFn.mock.calls.length === 1, { interval: 1 });
+          await dispatchEvent(upsertMessage());
+          releaseSessionTime();
+          await vi.waitUntil(() => updateUserFn.mock.calls.length >= 2, { interval: 1 });
+          await flush();
+          await db.delete('Options', 'featureFlags');
+
+          const deltas = updateUserFn.mock.calls.map(([body]) => Object.keys(body.deltas)[0]);
+          expect(deltas).toEqual(['session_time', 'session_count']);
+          const current = (await getCurrentSession())!;
+          expect((await queued()).map((r) => [r.kind, r.sessionId])).toEqual([
+            ['update', 'ending-session'],
+            ['create', current.sessionId],
+          ]);
+        });
+
         test('an active session ends at the deactivate time with the duration it adds', async () => {
           const activatedAt = Date.now() - 5_000;
           await db.put(
