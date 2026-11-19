@@ -6,13 +6,15 @@ import { enqueueSessionCreate, enqueueSessionUpdate } from '../../sw/sessionRequ
 import { drainSessionRequests } from '../../sw/sessionRequests/sender';
 import { sendSessionDuration, updateUserSession } from '../api/sw';
 import { encodeHashAsUriComponent } from '../context/helpers';
-import { cleanupCurrentSession, clearStore, db, getCurrentSession } from '../database/client';
+import { cleanupCurrentSession, db, getCurrentSession } from '../database/client';
 import { getAllNotificationClickedForOutcomes } from '../database/notifications';
 import { FeatureFlag, isFeatureEnabledInWorker } from '../features/featureFlags';
 import Log from '../libraries/Log';
 import { IDManager } from '../managers/IDManager';
+import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
 import {
+  CLICK_ATTRIBUTION_WINDOW_SECONDS,
   HEARTBEAT_INTERVAL_SECONDS,
   HEARTBEAT_SLACK_SECONDS,
   SessionStatus,
@@ -63,7 +65,7 @@ export async function upsertSession(options: UpsertOrDeactivateSessionPayload): 
   const existingSession = await getCurrentSession();
 
   if (!existingSession) {
-    const session = await startNewSession(options, await getDirectAttributionId(options));
+    const session = await startNewSession(options, await takeDirectAttributionId(options));
     await db.put('Sessions', session);
     await reportSessionStart(options, session);
     return;
@@ -113,15 +115,10 @@ async function continueOrRestartSession(
   // If failed to report/clean-up last time, we can attempt to try again here.
   // TODO: Possibly check that it's not unreasonably long.
   // TODO: Or couple with periodic ping for better results.
-  // Read before finalize, which clears the stored clicks.
-  const notificationId = await getDirectAttributionId(
-    options,
-    existingSession.lastDeactivatedTimestamp,
-  );
   // Drains only once the new session is saved, so a concurrent upsert never
   // finds the row missing and starts a second session.
   const endQueued = await finalizeSession(options, existingSession);
-  const session = await startNewSession(options, notificationId);
+  const session = await startNewSession(options, await takeDirectAttributionId(options));
   await db.put('Sessions', session);
   await reportSessionStart(options, session);
   if (endQueued) await drainSessionRequests();
@@ -383,11 +380,8 @@ async function finalizeSession(
   const { enableSessionDuration: sendOnFocusEnabled, outcomesConfig } = options;
   Log._debug('Finalize session', `duration: ${session.accumulatedDuration}s`);
   // Ends at the moment the last tab went hidden, not when the threshold expired.
-  const endQueued = await enqueueDurationUpdate(
-    options,
-    session,
-    session.lastDeactivatedTimestamp ?? Date.now(),
-  );
+  const endedAt = session.lastDeactivatedTimestamp ?? Date.now();
+  const endQueued = await enqueueDurationUpdate(options, session, endedAt);
   if (sendOnFocusEnabled) {
     Log._debug(`on_focus duration: ${session.accumulatedDuration}s`);
     const attribution = await getConfigAttribution(outcomesConfig);
@@ -395,7 +389,11 @@ async function finalizeSession(
     await sendSessionDuration(options, session.accumulatedDuration, attribution);
   }
 
-  await Promise.all([cleanupCurrentSession(), clearStore('Outcomes.NotificationClicked')]);
+  // A later click can be opening the next session, which reads it once started.
+  await Promise.all([
+    cleanupCurrentSession(),
+    keepClicks((clicks) => clicks.filter((c) => c.timestamp >= endedAt)),
+  ]);
   Log._debug('Finalize session finished');
   return endQueued;
 }
@@ -442,21 +440,37 @@ const resetSentUniqueOutcomes = async (): Promise<void> => {
   await Promise.all(promises);
 };
 
-/**
- * The notification whose click starts a new session. A click stored before the
- * previous session last went inactive belongs to that session: it resumed it,
- * and the finalize that would have cleared it did not run.
- */
-async function getDirectAttributionId(
-  { appId, outcomesConfig }: UpsertOrDeactivateSessionPayload,
-  previousSessionDeactivatedAt?: number | null,
-): Promise<string | null> {
-  if (!outcomesConfig.direct?.enabled) return null;
+/** Deletes the stored clicks that `select` does not return. */
+async function keepClicks(
+  select: (clicks: OutcomesNotificationClicked[]) => OutcomesNotificationClicked[],
+): Promise<OutcomesNotificationClicked[]> {
   const clicks = await getAllNotificationClickedForOutcomes().catch(() => []);
-  const click = clicks.find(
-    (c) => c.appId === appId && c.timestamp >= (previousSessionDeactivatedAt || 0),
+  const kept = select(clicks);
+  await Promise.all(
+    clicks
+      .filter((c) => !kept.includes(c))
+      .map((c) => db.delete('Outcomes.NotificationClicked', c.notificationId)),
   );
-  return click?.notificationId || null;
+  return kept;
+}
+
+/**
+ * The latest recent click opened the page that starts this session. Older
+ * clicks opened nothing, such as an external link, and are deleted so they
+ * attribute neither this session nor its outcomes.
+ */
+async function takeDirectAttributionId({
+  appId,
+  outcomesConfig,
+}: UpsertOrDeactivateSessionPayload): Promise<string | null> {
+  const recent = Date.now() - CLICK_ATTRIBUTION_WINDOW_SECONDS * 1000;
+  const [click] = await keepClicks((clicks) =>
+    clicks
+      .filter((c) => c.appId === appId && c.timestamp >= recent)
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 1),
+  );
+  return (outcomesConfig.direct?.enabled && click?.notificationId) || null;
 }
 
 function timeInSecondsBetweenTimestamps(timestamp1: number, timestamp2: number): number {

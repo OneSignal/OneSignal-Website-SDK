@@ -1173,8 +1173,8 @@ describe('ServiceWorker', () => {
         });
 
         describe('notification attribution', () => {
-          const storeClick = (timestamp = Date.now()) =>
-            db.put('Outcomes.NotificationClicked', { appId, notificationId, timestamp });
+          const storeClick = (timestamp = Date.now(), id = notificationId) =>
+            db.put('Outcomes.NotificationClicked', { appId, notificationId: id, timestamp });
           const createRecord = async () =>
             (await queued()).find((r) => r.kind === 'create') as CreateSessionRequestRecord;
           const expiredSession = (lastDeactivatedTimestamp: number): Session => ({
@@ -1208,9 +1208,57 @@ describe('ServiceWorker', () => {
           test('a click after the session expired attributes the next session', async () => {
             const deactivatedAt = Date.now() - 60_000;
             await db.put('Sessions', expiredSession(deactivatedAt));
-            await storeClick(deactivatedAt + 1_000);
+            await storeClick(Date.now() - 1_000);
 
             await upsert({ sessionThreshold: 30 });
+
+            expect((await createRecord()).directAttributionId).toBe(notificationId);
+            // Kept for the direct attribution of the new session's outcomes.
+            expect(await db.getAll('Outcomes.NotificationClicked')).toHaveLength(1);
+          });
+
+          test('the latest of several recent clicks attributes the session', async () => {
+            await storeClick(Date.now() - 5_000, 'a-older');
+            await storeClick(Date.now(), 'z-newer');
+
+            await upsert();
+
+            expect((await createRecord()).directAttributionId).toBe('z-newer');
+            expect(await db.getAll('Outcomes.NotificationClicked')).toEqual([
+              expect.objectContaining({ notificationId: 'z-newer' }),
+            ]);
+          });
+
+          test('a click that opened nothing does not attribute a later visit', async () => {
+            await storeClick(Date.now() - 3 * 24 * 60 * 60 * 1000);
+
+            await upsert();
+
+            expect((await createRecord()).directAttributionId).toBeUndefined();
+            expect(await db.getAll('Outcomes.NotificationClicked')).toEqual([]);
+          });
+
+          test('the finalize timer keeps a click made after the session went inactive', async () => {
+            await db.put('Sessions', {
+              ...expiredSession(0),
+              status: SessionStatus._Active,
+              lastActivatedTimestamp: Date.now() - 5_000,
+              lastDeactivatedTimestamp: null,
+            });
+            let finalize: (() => Promise<void>) | undefined;
+            vi.mocked(cancelableTimeout).mockImplementationOnce((callback) => {
+              finalize = callback;
+              return { promise: Promise.resolve(), cancel: vi.fn() };
+            });
+            await deactivateSession({ ...baseMessagePayload, isSafari: false });
+            await storeClick(Date.now() - 60_000, 'previous-click');
+            await storeClick(Date.now() + 1);
+
+            await finalize!();
+            expect(await db.getAll('Outcomes.NotificationClicked')).toEqual([
+              expect.objectContaining({ notificationId }),
+            ]);
+            await upsert();
 
             expect((await createRecord()).directAttributionId).toBe(notificationId);
           });
