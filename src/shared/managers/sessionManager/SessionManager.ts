@@ -252,7 +252,9 @@ export class SessionManager implements ISessionManager {
    * per interval across them. Ticks once on start too, since a timer restarts
    * on every page load and tab switch and might never reach a full interval.
    * Called again once the feature flags refresh, since the first page load
-   * after the flag turns on reads the old list.
+   * after the flag turns on reads the old list. Gated on the live flag, so a
+   * rollback also stops heartbeats for sessions already on the sessions API;
+   * their checkpoints and end still carry the full duration.
    */
   _startHeartbeat(): void {
     if (this._heartbeatTimer || document.visibilityState !== 'visible') return;
