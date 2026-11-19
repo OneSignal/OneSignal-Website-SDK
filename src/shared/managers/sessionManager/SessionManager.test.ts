@@ -313,13 +313,9 @@ describe('SessionManager', () => {
       vi.useRealTimers();
     });
 
-    test('a visible page asks the worker for a heartbeat every interval', async () => {
+    test('a visible page asks the worker for a heartbeat on start and every interval', async () => {
       await sm._upsertSession(SessionOrigin._UserCreate);
-
-      await vi.advanceTimersByTimeAsync(INTERVAL_MS - 1);
-      expect(heartbeats()).toHaveLength(0);
-
-      await vi.advanceTimersByTimeAsync(1);
+      await vi.advanceTimersByTimeAsync(0);
       expect(heartbeats()).toEqual([
         [
           WorkerMessengerCommand._SessionHeartbeat,
@@ -331,8 +327,12 @@ describe('SessionManager', () => {
         ],
       ]);
 
-      await vi.advanceTimersByTimeAsync(INTERVAL_MS);
+      await vi.advanceTimersByTimeAsync(INTERVAL_MS - 1);
+      expect(heartbeats()).toHaveLength(1);
+      await vi.advanceTimersByTimeAsync(1);
       expect(heartbeats()).toHaveLength(2);
+      await vi.advanceTimersByTimeAsync(INTERVAL_MS);
+      expect(heartbeats()).toHaveLength(3);
     });
 
     test('hiding the page stops the timer, and showing it restarts the interval', async () => {
@@ -342,14 +342,14 @@ describe('SessionManager', () => {
       visibility('hidden');
       await sm._handleVisibilityChange();
       await vi.advanceTimersByTimeAsync(INTERVAL_MS);
-      expect(heartbeats()).toHaveLength(0);
+      expect(heartbeats()).toHaveLength(1);
 
       visibility('visible');
       await sm._handleVisibilityChange();
       await vi.advanceTimersByTimeAsync(INTERVAL_MS - 1);
-      expect(heartbeats()).toHaveLength(0);
+      expect(heartbeats()).toHaveLength(2);
       await vi.advanceTimersByTimeAsync(1);
-      expect(heartbeats()).toHaveLength(1);
+      expect(heartbeats()).toHaveLength(3);
     });
 
     test('a pagehide stops the timer', async () => {
@@ -358,7 +358,7 @@ describe('SessionManager', () => {
       await sm._handlePageHide();
       await vi.advanceTimersByTimeAsync(INTERVAL_MS);
 
-      expect(heartbeats()).toHaveLength(0);
+      expect(heartbeats()).toHaveLength(1);
     });
 
     test('a page that starts hidden has no timer', async () => {
@@ -377,7 +377,7 @@ describe('SessionManager', () => {
 
       await vi.advanceTimersByTimeAsync(INTERVAL_MS);
 
-      expect(heartbeats()).toHaveLength(1);
+      expect(heartbeats()).toHaveLength(2);
     });
 
     test('a later page view, which only sets up listeners, starts the timer', async () => {
@@ -385,7 +385,7 @@ describe('SessionManager', () => {
 
       await vi.advanceTimersByTimeAsync(INTERVAL_MS);
 
-      expect(heartbeats()).toHaveLength(1);
+      expect(heartbeats()).toHaveLength(2);
     });
 
     test('a flag that turns on after setup starts the timer on the next start call', async () => {
@@ -398,7 +398,7 @@ describe('SessionManager', () => {
       sm._startHeartbeat();
       await vi.advanceTimersByTimeAsync(INTERVAL_MS);
 
-      expect(heartbeats()).toHaveLength(1);
+      expect(heartbeats()).toHaveLength(2);
     });
 
     test('no timer before session listeners are set up', async () => {

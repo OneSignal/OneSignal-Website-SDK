@@ -2,7 +2,7 @@ import Log from '../libraries/Log';
 import { ONESIGNAL_SESSION_KEY } from '../session/constants';
 import { IS_SERVICE_WORKER } from '../utils/env';
 import { DATABASE_NAME, VERSION } from './constants';
-import { openDB, updateInTransaction, wrapDb } from './idb-lite';
+import { openDB, wrapDb } from './idb-lite';
 import type { IDBStoreName, IdKey, IndexedDBSchema, OptionKey } from './types';
 import {
   migrateModelNameSubscriptionsTableForV6,
@@ -154,19 +154,6 @@ export const db = {
     const _db = await dbPromise;
     return guard(`delete(${storeName}/${key})`, () => _db.delete(storeName, key), undefined);
   },
-};
-
-export const updateRecord = async <K extends IDBStoreName>(
-  storeName: K,
-  key: IndexedDBSchema[K]['key'],
-  fn: (value: IndexedDBSchema[K]['value'] | undefined) => IndexedDBSchema[K]['value'] | undefined,
-) => {
-  const _db = await dbPromise;
-  return guard(
-    `update(${storeName})`,
-    () => updateInTransaction(_db.raw, storeName, key, fn),
-    undefined,
-  );
 };
 
 export const clearStore = async <K extends IDBStoreName>(storeName: K) => {

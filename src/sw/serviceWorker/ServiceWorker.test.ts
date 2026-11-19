@@ -1961,6 +1961,29 @@ describe('ServiceWorker', () => {
           expect(await queued()).toHaveLength(1);
         });
 
+        test('a failed enqueue keeps the last duration sent, so the next tick retries', async () => {
+          vi.spyOn(Log, '_error').mockImplementation(() => {});
+          await db.put(
+            'Sessions',
+            activeSession(HEARTBEAT_INTERVAL_SECONDS, { checkpointedDuration: 100 }),
+          );
+          const put = db.put.bind(db);
+          const putSpy = vi
+            .spyOn(db, 'put')
+            .mockImplementation((store, value) =>
+              store === 'SessionRequests'
+                ? Promise.reject(new Error('quota'))
+                : put(store, value as never),
+            );
+
+          await heartbeat();
+          expect((await getCurrentSession())!.checkpointedDuration).toBe(100);
+
+          putSpy.mockRestore();
+          await heartbeat();
+          expect(await queued()).toHaveLength(1);
+        });
+
         test('a hide right after a heartbeat sends no second update', async () => {
           await db.put('Sessions', activeSession(HEARTBEAT_INTERVAL_SECONDS));
           await heartbeat();

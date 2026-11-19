@@ -249,8 +249,10 @@ export class SessionManager implements ISessionManager {
   /**
    * The worker can be stopped while idle, so a visible tab drives the
    * heartbeat. Each visible tab ticks; the worker sends at most one request
-   * per interval across them. Called again once the feature flags refresh,
-   * since the first page load after the flag turns on reads the old list.
+   * per interval across them. Ticks once on start too, since a timer restarts
+   * on every page load and tab switch and might never reach a full interval.
+   * Called again once the feature flags refresh, since the first page load
+   * after the flag turns on reads the old list.
    */
   _startHeartbeat(): void {
     if (this._heartbeatTimer || document.visibilityState !== 'visible') return;
@@ -260,6 +262,7 @@ export class SessionManager implements ISessionManager {
       () => void this._sendHeartbeat(),
       HEARTBEAT_INTERVAL_SECONDS * 1000,
     );
+    void this._sendHeartbeat();
   }
 
   _stopHeartbeat(): void {
