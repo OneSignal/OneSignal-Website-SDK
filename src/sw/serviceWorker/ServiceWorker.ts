@@ -414,6 +414,7 @@ async function updateSessionBasedOnHasActive(
   hasAnyActiveSessions: boolean,
   options: UpsertOrDeactivateSessionPayload,
 ) {
+  debouncedBackgroundOrigin = undefined;
   const cancelableFinalize = await serializeSessionRefresh<CancelableTimeoutPromise | void>(() =>
     hasAnyActiveSessions ? upsertSession(options) : deactivateSession(options),
   );
@@ -421,7 +422,6 @@ async function updateSessionBasedOnHasActive(
     self.cancel = cancelableFinalize.cancel;
     event.waitUntil(cancelableFinalize.promise);
   }
-  debouncedBackgroundOrigin = undefined;
 }
 
 async function refreshSession(
@@ -479,9 +479,10 @@ function checkIfAnyClientsFocusedAndUpdateSession(
 
 /**
  * A hiding tab sends both blur and hidden, in either order, and the debounce
- * keeps only the last payload. Kept until the session is updated, so a blur
- * that lands last, or cancels the Safari visibility poll, still counts as the
- * tab hiding.
+ * keeps only the last payload. Kept until the refresh queues its session
+ * update, so a blur that lands last, or cancels the Safari visibility poll,
+ * still counts as the tab hiding. Cleared before that update waits on an
+ * earlier one, so a later blur is not taken as a hide.
  */
 let debouncedBackgroundOrigin: SessionOriginValue | undefined;
 
