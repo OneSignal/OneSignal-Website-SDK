@@ -276,10 +276,10 @@ OneSignalDeferred.push(async function (OneSignal) {
 });
 ```
 
-| Sync/Async | Property/Function | Description                                                                                                                                                | Argument List                          |
-| ---------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| `async`    | `login()`         | Logs in the user. Pass the JWT as the second argument.                                                                                                     | `externalId: string, jwtToken: string` |
-| `async`    | `updateUserJwt()` | Stores a new JWT for a user. Accepts any external ID, not only the current user. Requests that wait for a token for that user send on the next queue pass. | `externalId: string, token: string`    |
+| Sync/Async | Property/Function | Description                                                                                                                                                | Argument List                           |
+| ---------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| `async`    | `login()`         | Logs in the user. When Token Identity Verification is on, pass the JWT as the second argument.                                                             | `externalId: string, jwtToken?: string` |
+| `async`    | `updateUserJwt()` | Stores a new JWT for a user. Accepts any external ID, not only the current user. Requests that wait for a token for that user send on the next queue pass. | `externalId: string, token: string`     |
 
 `OneSignal.User.addEventListener('userJwtInvalidated', listener)` calls the listener with `{ externalId }` when OneSignal rejects the JWT of that user. The listener only gets events that fire after you add it.
 
@@ -287,7 +287,9 @@ When Token Identity Verification is on:
 
 - `logout()` disables the push subscription of the user that logs out. The SDK does not create an anonymous user on OneSignal. A later `login(externalId, jwt)` restores the push subscription.
 - The SDK does not create a user on OneSignal for an anonymous visitor. A push subscription stays on the browser until `login(externalId, jwt)`. Then the login creates the user with that push subscription.
-- The SDK does not link a legacy (v15 and earlier) player ID to a user. Call `login(externalId, jwt)` to identify the visitor.
+- Call `login(externalId, jwt)` before you add or remove tags, aliases, email addresses, or SMS numbers. The SDK drops these calls when no user is logged in, and logs a warning in the console. A later login does not send them.
+
+For all apps, the SDK does not link a legacy (v15 and earlier) player ID to a user. Call `login()` to identify the visitor.
 
 # Limitations
 
