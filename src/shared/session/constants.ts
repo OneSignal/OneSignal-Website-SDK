@@ -14,4 +14,9 @@ export const SessionOrigin = {
   _Focus: 7,
   _Blur: 8,
   _JwtUpdated: 9,
+  _Heartbeat: 10,
 } as const;
+
+// Hardcoded until the interval is remotely configured. Matches the mobile SDKs.
+export const HEARTBEAT_INTERVAL_SECONDS = 30 * 60;
+export const HEARTBEAT_SLACK_SECONDS = 60;

@@ -56,7 +56,8 @@ describe('pageSdkInit', () => {
       });
     });
 
-    await vi.waitUntil(() => initSpy.mock.calls.length > 0, { interval: 1 });
+    await vi.waitUntil(() => initSpy.mock.results.length > 0, { interval: 1 });
+    await initSpy.mock.results[0].value;
     expect(initSpy).toHaveBeenCalled();
   });
 });

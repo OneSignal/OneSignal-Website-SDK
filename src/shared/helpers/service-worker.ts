@@ -13,7 +13,11 @@ import Log from '../libraries/Log';
 import { IDManager } from '../managers/IDManager';
 import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
-import { SessionStatus } from '../session/constants';
+import {
+  HEARTBEAT_INTERVAL_SECONDS,
+  HEARTBEAT_SLACK_SECONDS,
+  SessionStatus,
+} from '../session/constants';
 import { initializeNewSession, isBackgroundOrigin } from '../session/helpers';
 import type { Session, SessionUser, UpsertOrDeactivateSessionPayload } from '../session/types';
 import { getBaseUrl } from './general';
@@ -299,6 +303,34 @@ async function enqueueCheckpoint(
   if (!(await enqueueDurationUpdate(options, session))) return false;
   session.checkpointedDuration = session.accumulatedDuration;
   return true;
+}
+
+/**
+ * Sends the duration of an active session once it has grown a heartbeat
+ * interval past the last duration sent. Every visible tab ticks, so running
+ * in the refresh chain is what keeps it to one request per interval across tabs.
+ */
+export async function sendSessionHeartbeat(
+  options: UpsertOrDeactivateSessionPayload,
+): Promise<void> {
+  if (await serializeSessionRefresh(() => enqueueHeartbeat(options))) await drainSessionRequests();
+}
+
+async function enqueueHeartbeat(options: UpsertOrDeactivateSessionPayload): Promise<boolean> {
+  const session = await getCurrentSession();
+  if (session?.status !== SessionStatus._Active) return false;
+  const duration =
+    session.accumulatedDuration +
+    timeInSecondsBetweenTimestamps(Date.now(), session.lastActivatedTimestamp);
+  // Page timers start before the worker's debounced activation, so a tick
+  // can land a little short of a full interval.
+  const due =
+    (session.checkpointedDuration ?? 0) + HEARTBEAT_INTERVAL_SECONDS - HEARTBEAT_SLACK_SECONDS;
+  if (duration < due) return false;
+  if (!(await enqueueDurationUpdate(options, { ...session, accumulatedDuration: duration }))) {
+    return false;
+  }
+  return saveCheckpointedDuration({ ...session, checkpointedDuration: duration });
 }
 
 // A finalize can delete the row during the enqueue. Writing the row read
