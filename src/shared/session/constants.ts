@@ -20,3 +20,6 @@ export const SessionOrigin = {
 // Hardcoded until the interval is remotely configured. Matches the mobile SDKs.
 export const HEARTBEAT_INTERVAL_SECONDS = 30 * 60;
 export const HEARTBEAT_SLACK_SECONDS = 60;
+
+/** How long after a click its page may start the session it attributes. */
+export const CLICK_ATTRIBUTION_WINDOW_SECONDS = 60;

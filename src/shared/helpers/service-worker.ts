@@ -6,7 +6,7 @@ import { enqueueSessionCreate, enqueueSessionUpdate } from '../../sw/sessionRequ
 import { drainSessionRequests } from '../../sw/sessionRequests/sender';
 import { sendSessionDuration, updateUserSession } from '../api/sw';
 import { encodeHashAsUriComponent } from '../context/helpers';
-import { cleanupCurrentSession, clearStore, db, getCurrentSession } from '../database/client';
+import { cleanupCurrentSession, db, getCurrentSession } from '../database/client';
 import { getAllNotificationClickedForOutcomes } from '../database/notifications';
 import { FeatureFlag, isFeatureEnabledInWorker } from '../features/featureFlags';
 import Log from '../libraries/Log';
@@ -14,6 +14,7 @@ import { IDManager } from '../managers/IDManager';
 import type { OutcomesNotificationClicked } from '../models/OutcomesNotificationEvents';
 import Path from '../models/Path';
 import {
+  CLICK_ATTRIBUTION_WINDOW_SECONDS,
   HEARTBEAT_INTERVAL_SECONDS,
   HEARTBEAT_SLACK_SECONDS,
   SessionStatus,
@@ -61,19 +62,10 @@ export function serializeSessionRefresh<T>(fn: () => Promise<T>): Promise<T> {
 
 // Call through serializeSessionRefresh.
 export async function upsertSession(options: UpsertOrDeactivateSessionPayload): Promise<void> {
-  const { appId } = options;
   const existingSession = await getCurrentSession();
 
   if (!existingSession) {
-    const session = await startNewSession(options);
-
-    // if there is a record about a clicked notification in our database, attribute session to it.
-    const clickedNotification: OutcomesNotificationClicked | null =
-      await getLastNotificationClickedForOutcomes(appId);
-    if (clickedNotification) {
-      session.notificationId = clickedNotification.notificationId;
-    }
-
+    const session = await startNewSession(options, await takeDirectAttributionId(options));
     await db.put('Sessions', session);
     await reportSessionStart(options, session);
     return;
@@ -126,7 +118,7 @@ async function continueOrRestartSession(
   // Drains only once the new session is saved, so a concurrent upsert never
   // finds the row missing and starts a second session.
   const endQueued = await finalizeSession(options, existingSession);
-  const session = await startNewSession(options);
+  const session = await startNewSession(options, await takeDirectAttributionId(options));
   await db.put('Sessions', session);
   await reportSessionStart(options, session);
   if (endQueued) await drainSessionRequests();
@@ -134,13 +126,13 @@ async function continueOrRestartSession(
 
 type NewSession = Session & Required<Pick<Session, 'sessionId' | 'usesSessionsApi'>>;
 
-async function startNewSession({
-  appId,
-  onesignalId,
-  subscriptionId,
-}: SessionUser): Promise<NewSession> {
+async function startNewSession(
+  { appId, onesignalId, subscriptionId }: SessionUser,
+  notificationId: string | null,
+): Promise<NewSession> {
   return initializeNewSession({
     appId,
+    notificationId,
     sessionId: crypto.randomUUID(),
     usesSessionsApi: await isFeatureEnabledInWorker(FeatureFlag._SessionsV2ApiCutover),
     onesignalId,
@@ -151,7 +143,7 @@ async function startNewSession({
 async function reportSessionStart(user: SessionUser, session: NewSession): Promise<void> {
   await Promise.all([
     sendOnSessionCall(user, session),
-    session.usesSessionsApi && createServerSession(user, session.sessionId, session.startTimestamp),
+    session.usesSessionsApi && createServerSession(user, session.sessionId, session),
   ]);
 }
 
@@ -161,9 +153,9 @@ async function reportSessionStart(user: SessionUser, session: NewSession): Promi
  * are re-pinned only once the create is queued, so a later upsert retries it.
  */
 async function enqueueDeferredCreate(user: SessionUser, session: Session): Promise<boolean> {
-  const { sessionId, usesSessionsApi, onesignalId, subscriptionId, startTimestamp } = session;
+  const { sessionId, usesSessionsApi, onesignalId, subscriptionId } = session;
   if (!usesSessionsApi || !sessionId || !hasLocalId(onesignalId, subscriptionId)) return false;
-  if (!(await enqueueCreate(user, sessionId, startTimestamp))) return false;
+  if (!(await enqueueCreate(user, sessionId, session))) return false;
 
   session.onesignalId = user.onesignalId;
   session.subscriptionId = user.subscriptionId;
@@ -174,15 +166,15 @@ async function enqueueDeferredCreate(user: SessionUser, session: Session): Promi
 async function createServerSession(
   user: SessionUser,
   sessionId: string,
-  startTime: number,
+  session: Session,
 ): Promise<void> {
-  if (await enqueueCreate(user, sessionId, startTime)) await drainSessionRequests();
+  if (await enqueueCreate(user, sessionId, session)) await drainSessionRequests();
 }
 
 async function enqueueCreate(
   { appId, onesignalId, subscriptionId, subscriptionType }: SessionUser,
   sessionId: string,
-  startTime: number,
+  { startTimestamp, notificationId }: Session,
 ): Promise<boolean> {
   // Queued records are never rewritten, so a create with a local ID could never send.
   if (!subscriptionType || hasLocalId(onesignalId, subscriptionId)) {
@@ -196,7 +188,8 @@ async function enqueueCreate(
       onesignalId,
       subscriptionId,
       subscriptionType,
-      startTime,
+      startTime: startTimestamp,
+      directAttributionId: notificationId || undefined,
     }),
   );
 }
@@ -387,11 +380,8 @@ async function finalizeSession(
   const { enableSessionDuration: sendOnFocusEnabled, outcomesConfig } = options;
   Log._debug('Finalize session', `duration: ${session.accumulatedDuration}s`);
   // Ends at the moment the last tab went hidden, not when the threshold expired.
-  const endQueued = await enqueueDurationUpdate(
-    options,
-    session,
-    session.lastDeactivatedTimestamp ?? Date.now(),
-  );
+  const endedAt = session.lastDeactivatedTimestamp ?? Date.now();
+  const endQueued = await enqueueDurationUpdate(options, session, endedAt);
   if (sendOnFocusEnabled) {
     Log._debug(`on_focus duration: ${session.accumulatedDuration}s`);
     const attribution = await getConfigAttribution(outcomesConfig);
@@ -399,7 +389,11 @@ async function finalizeSession(
     await sendSessionDuration(options, session.accumulatedDuration, attribution);
   }
 
-  await Promise.all([cleanupCurrentSession(), clearStore('Outcomes.NotificationClicked')]);
+  // A later click can be opening the next session, which reads it once started.
+  await Promise.all([
+    cleanupCurrentSession(),
+    keepClicks((clicks) => clicks.filter((c) => c.timestamp >= endedAt)),
+  ]);
   Log._debug('Finalize session finished');
   return endQueued;
 }
@@ -446,18 +440,38 @@ const resetSentUniqueOutcomes = async (): Promise<void> => {
   await Promise.all(promises);
 };
 
-const getLastNotificationClickedForOutcomes = async (
-  appId: string,
-): Promise<OutcomesNotificationClicked | null> => {
-  let allClickedNotifications: OutcomesNotificationClicked[] = [];
-  try {
-    allClickedNotifications = await getAllNotificationClickedForOutcomes();
-  } catch (e) {
-    Log._error('getLastClickedNotif error', e);
-  }
-  const predicate = (notification: OutcomesNotificationClicked) => notification.appId === appId;
-  return allClickedNotifications.find(predicate) || null;
-};
+/** Deletes the stored clicks that `select` does not return. */
+async function keepClicks(
+  select: (clicks: OutcomesNotificationClicked[]) => OutcomesNotificationClicked[],
+): Promise<OutcomesNotificationClicked[]> {
+  const clicks = await getAllNotificationClickedForOutcomes().catch(() => []);
+  const kept = select(clicks);
+  await Promise.all(
+    clicks
+      .filter((c) => !kept.includes(c))
+      .map((c) => db.delete('Outcomes.NotificationClicked', c.notificationId)),
+  );
+  return kept;
+}
+
+/**
+ * The latest recent click opened the page that starts this session. Older
+ * clicks opened nothing, such as an external link, and are deleted so they
+ * attribute neither this session nor its outcomes.
+ */
+async function takeDirectAttributionId({
+  appId,
+  outcomesConfig,
+}: UpsertOrDeactivateSessionPayload): Promise<string | null> {
+  const recent = Date.now() - CLICK_ATTRIBUTION_WINDOW_SECONDS * 1000;
+  const [click] = await keepClicks((clicks) =>
+    clicks
+      .filter((c) => c.appId === appId && c.timestamp >= recent)
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 1),
+  );
+  return (outcomesConfig.direct?.enabled && click?.notificationId) || null;
+}
 
 function timeInSecondsBetweenTimestamps(timestamp1: number, timestamp2: number): number {
   if (timestamp1 <= timestamp2) {
