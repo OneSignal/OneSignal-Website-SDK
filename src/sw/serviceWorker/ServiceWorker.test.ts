@@ -712,6 +712,34 @@ describe('ServiceWorker', () => {
       // should open url
       expect(openWindowFn).toHaveBeenCalledWith(launchURL);
     });
+
+    test('a click during an active session changes neither the session nor the next one', async () => {
+      const active: Session = {
+        accumulatedDuration: 5,
+        appId,
+        lastActivatedTimestamp: Date.now() - 10_000,
+        lastDeactivatedTimestamp: null,
+        notificationId: null,
+        sessionKey: ONESIGNAL_SESSION_KEY,
+        startTimestamp: Date.now() - 10_000,
+        status: SessionStatus._Active,
+      };
+      await db.put('Sessions', active);
+      const putSpy = vi.spyOn(db, 'put');
+
+      await dispatchEvent(
+        new NotificationEvent('notificationclick', {
+          data: { launchURL: 'http://some-launch-url.com', notificationId },
+        }),
+      );
+
+      expect(putSpy).not.toHaveBeenCalledWith('Sessions', expect.anything());
+      expect(await getCurrentSession()).toEqual(active);
+      // Not stored, so the next session cannot pick it up.
+      expect(await db.getAll('Outcomes.NotificationClicked')).toEqual([]);
+      putSpy.mockRestore();
+    });
+
     test('a click while the session is inactive does not write the session', async () => {
       const inactive: Session = {
         accumulatedDuration: 5,
