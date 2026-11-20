@@ -1132,7 +1132,7 @@ describe('ServiceWorker', () => {
         test('a new session enqueues a create with its start time and pinned IDs, then drains', async () => {
           await enableSessionsApi();
 
-          await upsert({ subscriptionType: SubscriptionType._SafariLegacyPush });
+          await upsert({ subscriptionType: SubscriptionType._FirefoxPush });
 
           const current = (await getCurrentSession())!;
           expect(await queued()).toEqual([
@@ -1142,7 +1142,7 @@ describe('ServiceWorker', () => {
               sessionId: current.sessionId,
               onesignalId: ONESIGNAL_ID,
               subscriptionId: SUB_ID,
-              subscriptionType: SubscriptionType._SafariLegacyPush,
+              subscriptionType: SubscriptionType._FirefoxPush,
               startTime: current.startTimestamp,
               idempotencyKey: expect.stringMatching(/^[0-9a-f-]{36}$/),
             }),
@@ -1442,13 +1442,21 @@ describe('ServiceWorker', () => {
           ]);
         });
 
-        test('a payload without a subscription type enqueues no create', async () => {
+        // The public create rejects SafariLegacyPush, and an older page sends no type.
+        test.each([
+          ['no subscription type', undefined],
+          ['SafariLegacyPush', SubscriptionType._SafariLegacyPush],
+        ])('a session with %s stays on the legacy path', async (_, subscriptionType) => {
           await enableSessionsApi();
 
-          await upsert({ subscriptionType: undefined });
+          await upsert({ subscriptionType });
 
           expect(await queued()).toEqual([]);
-          expect(updateUserFn).toHaveBeenCalledExactlyOnceWith({ refresh_device_metadata: true });
+          expect((await getCurrentSession())!.usesSessionsApi).toBe(false);
+          expect(updateUserFn).toHaveBeenCalledExactlyOnceWith({
+            refresh_device_metadata: true,
+            deltas: { session_count: 1 },
+          });
         });
 
         test('a queue failure still sends the user update', async () => {
@@ -2081,6 +2089,22 @@ describe('ServiceWorker', () => {
 
           expect((await getCurrentSession())!.status).toBe(SessionStatus._Active);
           expect(await queued()).toEqual([]);
+        });
+
+        // An update waits a few seconds after its create, so a create drained only
+        // with the end would leave the end for a later drain.
+        test('a blur that brings server ids drains the deferred create before the finalize', async () => {
+          await db.put(
+            'Sessions',
+            activeSession({ onesignalId: 'local-user', subscriptionId: 'local-subscription' }),
+          );
+
+          await deactivate({ sessionOrigin: SessionOrigin._Blur });
+
+          expect(await queued()).toEqual([
+            expect.objectContaining({ kind: 'create', onesignalId: ONESIGNAL_ID }),
+          ]);
+          expect(drainSessionRequests).toHaveBeenCalledOnce();
         });
 
         test('a session started with local ids gets its create and checkpoint once a deactivate brings server ids', async () => {

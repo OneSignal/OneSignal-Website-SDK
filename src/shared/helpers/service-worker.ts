@@ -20,6 +20,7 @@ import {
 } from '../session/constants';
 import { initializeNewSession, isBackgroundOrigin, toHeartbeatInterval } from '../session/helpers';
 import type { Session, SessionUser, UpsertOrDeactivateSessionPayload } from '../session/types';
+import { SubscriptionType } from '../subscriptions/constants';
 import { getBaseUrl } from './general';
 import { getConfigAttribution } from './OutcomesHelper';
 
@@ -126,14 +127,19 @@ async function continueOrRestartSession(
 type NewSession = Session & Required<Pick<Session, 'sessionId' | 'usesSessionsApi'>>;
 
 async function startNewSession(
-  { appId, onesignalId, subscriptionId }: SessionUser,
+  { appId, onesignalId, subscriptionId, subscriptionType }: SessionUser,
   notificationId: string | null,
 ): Promise<NewSession> {
   return initializeNewSession({
     appId,
     notificationId,
     sessionId: crypto.randomUUID(),
-    usesSessionsApi: await isFeatureEnabledInWorker(FeatureFlag._SessionsV2ApiCutover),
+    // The public create rejects SafariLegacyPush, and an older page sends no
+    // type. Those sessions stay on the legacy path so they are still counted.
+    usesSessionsApi:
+      !!subscriptionType &&
+      subscriptionType !== SubscriptionType._SafariLegacyPush &&
+      (await isFeatureEnabledInWorker(FeatureFlag._SessionsV2ApiCutover)),
     onesignalId,
     subscriptionId,
   }) as NewSession;
@@ -219,8 +225,9 @@ export async function deactivateSession(
     Log._debug('No active session to deactivate');
     return undefined;
   }
-  // Sent by the drain after the checkpoint or end below, which go out in queue order behind it.
-  await enqueueDeferredCreate(options, existingSession);
+  // Drained now: an update waits a few seconds after its create, so a create
+  // drained with the end would leave the end for a later drain.
+  const createQueued = await enqueueDeferredCreate(options, existingSession);
 
   // The finalize step reuses this payload after the threshold, so a token the
   // page refreshes in that window is not used for the session_time request.
@@ -248,10 +255,9 @@ export async function deactivateSession(
    */
   if (existingSession.status === SessionStatus._Inactive) {
     // A blur made the session inactive without a checkpoint; the tab hiding later does.
-    if (await enqueueCheckpoint(options, existingSession)) {
-      if (!(await saveCheckpointedDuration(existingSession))) return undefined;
-      void drainSessionRequests();
-    }
+    const checkpointQueued = await enqueueCheckpoint(options, existingSession);
+    if (checkpointQueued && !(await saveCheckpointedDuration(existingSession))) return undefined;
+    if (checkpointQueued || createQueued) void drainSessionRequests();
     return cancelableTimeout(finalizeSWSession, thresholdInSeconds);
   }
 
@@ -277,7 +283,7 @@ export async function deactivateSession(
   const checkpointQueued = await enqueueCheckpoint(options, existingSession);
   await db.put('Sessions', existingSession);
   // Not awaited, so the caller gets the finalize timer without waiting on the network.
-  if (checkpointQueued) void drainSessionRequests();
+  if (checkpointQueued || createQueued) void drainSessionRequests();
 
   // Started once the row is inactive, since finalize skips a row that is not.
   return cancelableTimeout(finalizeSWSession, thresholdInSeconds);
