@@ -68,7 +68,7 @@ export interface AppConfig {
   // TODO: Cleanup: pageUrl is also on AppUserConfig
   pageUrl?: string;
   sessionThreshold?: number;
-  /** Seconds of visible time between session heartbeats. */
+  /** Seconds of active session time between session heartbeats. */
   heartbeatInterval: number;
 
   siteName: string;
