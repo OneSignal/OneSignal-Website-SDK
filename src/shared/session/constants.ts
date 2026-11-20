@@ -17,8 +17,10 @@ export const SessionOrigin = {
   _Heartbeat: 10,
 } as const;
 
-// Hardcoded until the interval is remotely configured. Matches the mobile SDKs.
-export const HEARTBEAT_INTERVAL_SECONDS = 30 * 60;
+export const DEFAULT_HEARTBEAT_INTERVAL_SECONDS = 30 * 60;
+// Bounds a misconfigured server value so it can neither flood requests nor stop heartbeats.
+export const MIN_HEARTBEAT_INTERVAL_SECONDS = 60;
+export const MAX_HEARTBEAT_INTERVAL_SECONDS = 24 * 60 * 60;
 export const HEARTBEAT_SLACK_SECONDS = 60;
 
 /** How long after a click its page may start the session it attributes. */

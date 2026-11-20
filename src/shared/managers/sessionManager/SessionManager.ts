@@ -8,7 +8,7 @@ import { hasSafariWindow, supportsServiceWorkers } from 'src/shared/environment/
 import { FeatureFlag, isFeatureEnabled } from 'src/shared/features/featureFlags';
 import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/network';
 import { isFirstPageView } from 'src/shared/helpers/pageview';
-import { HEARTBEAT_INTERVAL_SECONDS, SessionOrigin } from 'src/shared/session/constants';
+import { SessionOrigin } from 'src/shared/session/constants';
 import type {
   SessionOriginValue,
   SessionUser,
@@ -62,6 +62,7 @@ export class SessionManager implements ISessionManager {
       sessionOrigin,
       isSafari: hasSafariWindow(),
       outcomesConfig: this._context._appConfig.userConfig.outcomes!,
+      heartbeatInterval: this._context._appConfig.heartbeatInterval,
       ...this._ivSessionCredentials(),
     };
   }
@@ -267,7 +268,7 @@ export class SessionManager implements ISessionManager {
     }
     this._heartbeatTimer = setInterval(
       () => void this._sendHeartbeat(),
-      HEARTBEAT_INTERVAL_SECONDS * 1000,
+      this._context._appConfig.heartbeatInterval * 1000,
     );
     void this._sendHeartbeat();
   }

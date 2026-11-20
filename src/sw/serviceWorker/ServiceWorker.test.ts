@@ -40,7 +40,7 @@ import { DeliveryPlatformKind } from 'src/shared/models/DeliveryPlatformKind';
 import { RawPushSubscription } from 'src/shared/models/RawPushSubscription';
 import { SubscriptionStrategyKind } from 'src/shared/models/SubscriptionStrategyKind';
 import {
-  HEARTBEAT_INTERVAL_SECONDS,
+  DEFAULT_HEARTBEAT_INTERVAL_SECONDS,
   ONESIGNAL_SESSION_KEY,
   SessionOrigin,
   SessionStatus,
@@ -2091,7 +2091,7 @@ describe('ServiceWorker', () => {
         });
 
         test('an interval of active time enqueues the cumulative duration without an end time', async () => {
-          await db.put('Sessions', activeSession(HEARTBEAT_INTERVAL_SECONDS));
+          await db.put('Sessions', activeSession(DEFAULT_HEARTBEAT_INTERVAL_SECONDS));
 
           await heartbeat();
 
@@ -2108,21 +2108,41 @@ describe('ServiceWorker', () => {
           });
           expect(update).not.toHaveProperty('endTime', expect.anything());
           const duration = current.checkpointedDuration!;
-          expect(duration).toBeGreaterThanOrEqual(100 + HEARTBEAT_INTERVAL_SECONDS);
+          expect(duration).toBeGreaterThanOrEqual(100 + DEFAULT_HEARTBEAT_INTERVAL_SECONDS);
           expect(update).toMatchObject({ durationSeconds: duration });
           expect(drainSessionRequests).toHaveBeenCalled();
         });
 
         test('a tick a little short of the interval still sends', async () => {
-          await db.put('Sessions', activeSession(HEARTBEAT_INTERVAL_SECONDS - 5));
+          await db.put('Sessions', activeSession(DEFAULT_HEARTBEAT_INTERVAL_SECONDS - 5));
 
           await heartbeat();
 
           expect(await queued()).toHaveLength(1);
         });
 
+        test('uses the interval the page sends', async () => {
+          await db.put('Sessions', activeSession(240, { checkpointedDuration: 100 }));
+          await heartbeat({ heartbeatInterval: 300 });
+          expect(await queued()).toHaveLength(0);
+
+          await db.put('Sessions', activeSession(300, { checkpointedDuration: 100 }));
+          await heartbeat({ heartbeatInterval: 300 });
+          expect(await queued()).toHaveLength(1);
+        });
+
+        test('a short interval still waits most of it', async () => {
+          await db.put('Sessions', activeSession(30, { checkpointedDuration: 100 }));
+          await heartbeat({ heartbeatInterval: 60 });
+          expect(await queued()).toHaveLength(0);
+
+          await db.put('Sessions', activeSession(55, { checkpointedDuration: 100 }));
+          await heartbeat({ heartbeatInterval: 60 });
+          expect(await queued()).toHaveLength(1);
+        });
+
         test('ticks from several tabs within one interval send once', async () => {
-          await db.put('Sessions', activeSession(HEARTBEAT_INTERVAL_SECONDS));
+          await db.put('Sessions', activeSession(DEFAULT_HEARTBEAT_INTERVAL_SECONDS));
 
           await heartbeat();
           await heartbeat();
@@ -2131,7 +2151,7 @@ describe('ServiceWorker', () => {
         });
 
         test('ticks from two tabs at the same moment send once', async () => {
-          await db.put('Sessions', activeSession(HEARTBEAT_INTERVAL_SECONDS));
+          await db.put('Sessions', activeSession(DEFAULT_HEARTBEAT_INTERVAL_SECONDS));
 
           await Promise.all([heartbeat(), heartbeat()]);
 
@@ -2142,14 +2162,14 @@ describe('ServiceWorker', () => {
         test('the interval counts from the last duration sent', async () => {
           await db.put(
             'Sessions',
-            activeSession(HEARTBEAT_INTERVAL_SECONDS / 2, { checkpointedDuration: 100 }),
+            activeSession(DEFAULT_HEARTBEAT_INTERVAL_SECONDS / 2, { checkpointedDuration: 100 }),
           );
           await heartbeat();
           expect(await queued()).toEqual([]);
 
           await db.put(
             'Sessions',
-            activeSession(HEARTBEAT_INTERVAL_SECONDS, { checkpointedDuration: 100 }),
+            activeSession(DEFAULT_HEARTBEAT_INTERVAL_SECONDS, { checkpointedDuration: 100 }),
           );
           await heartbeat();
           expect(await queued()).toHaveLength(1);
@@ -2159,7 +2179,7 @@ describe('ServiceWorker', () => {
           vi.spyOn(Log, '_error').mockImplementation(() => {});
           await db.put(
             'Sessions',
-            activeSession(HEARTBEAT_INTERVAL_SECONDS, { checkpointedDuration: 100 }),
+            activeSession(DEFAULT_HEARTBEAT_INTERVAL_SECONDS, { checkpointedDuration: 100 }),
           );
           const put = db.put.bind(db);
           const putSpy = vi
@@ -2180,7 +2200,7 @@ describe('ServiceWorker', () => {
 
         test('a hide right after a heartbeat sends no second update', async () => {
           vi.useFakeTimers({ toFake: ['Date'] });
-          await db.put('Sessions', activeSession(HEARTBEAT_INTERVAL_SECONDS));
+          await db.put('Sessions', activeSession(DEFAULT_HEARTBEAT_INTERVAL_SECONDS));
           await heartbeat();
           const sent = (await getCurrentSession())!.checkpointedDuration!;
 
@@ -2210,7 +2230,7 @@ describe('ServiceWorker', () => {
           ['a session that still has local ids', { onesignalId: 'local-user' }, {}],
           ['a page that sends no subscription type', {}, { subscriptionType: undefined }],
         ])('%s sends no heartbeat', async (_, overrides, payload) => {
-          await db.put('Sessions', activeSession(HEARTBEAT_INTERVAL_SECONDS, overrides));
+          await db.put('Sessions', activeSession(DEFAULT_HEARTBEAT_INTERVAL_SECONDS, overrides));
 
           await heartbeat(payload);
 
@@ -2227,7 +2247,7 @@ describe('ServiceWorker', () => {
         });
 
         test('the heartbeat message sends without the session debounce', async () => {
-          await db.put('Sessions', activeSession(HEARTBEAT_INTERVAL_SECONDS));
+          await db.put('Sessions', activeSession(DEFAULT_HEARTBEAT_INTERVAL_SECONDS));
           const cancel = vi.fn();
           self.cancel = cancel;
 
@@ -2829,6 +2849,7 @@ describe('ServiceWorker', () => {
       vapidPublicKey: '1234567890',
       jwtRequired: JwtRequirement._NotRequired,
       userConfig: TestContext.getFakeAppUserConfig(),
+      heartbeatInterval: DEFAULT_HEARTBEAT_INTERVAL_SECONDS,
     };
     const serializedSubscription = {
       createdAt: null,
