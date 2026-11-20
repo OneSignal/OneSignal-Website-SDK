@@ -342,7 +342,7 @@ async function sendOnSessionCall(user: SessionUser, session: Session) {
   void resetSentUniqueOutcomes();
 
   // USER MODEL TO DO: handle potential 404 - user does not exist
-  const sent = await updateUserSession(user);
+  const sent = await updateUserSession(user, !!session.usesSessionsApi);
   // Only a token can arrive later. An anonymous user under Identity Verification
   // has no backend user, so that skip does not leave the session pending.
   if (!sent && user.jwtRequired && user.externalId) {
@@ -358,7 +358,7 @@ async function sendPendingOnSession(user: SessionUser, session: Session): Promis
   await db.put('Sessions', session);
   // The count belongs to the user who started the session.
   if (!pendingFor || pendingFor !== user.externalId) return;
-  const sent = await updateUserSession(user);
+  const sent = await updateUserSession(user, !!session.usesSessionsApi);
   if (sent) return;
   await markOnSessionPending(session, pendingFor);
 }
@@ -383,7 +383,8 @@ async function finalizeSession(
   // Ends at the moment the last tab went hidden, not when the threshold expired.
   const endedAt = session.lastDeactivatedTimestamp ?? Date.now();
   const endQueued = await enqueueDurationUpdate(options, session, endedAt);
-  if (sendOnFocusEnabled) {
+  // The backend derives session_time and the duration outcome from a Sessions API session.
+  if (sendOnFocusEnabled && !session.usesSessionsApi) {
     Log._debug(`on_focus duration: ${session.accumulatedDuration}s`);
     const attribution = await getConfigAttribution(outcomesConfig);
     Log._debug('on_focus attribution', attribution);
