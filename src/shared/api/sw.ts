@@ -63,21 +63,23 @@ async function notifyPageIfUnauthorized(
 
 /**
  *  Main on_session call
+ * @param usesSessionsApi the backend counts a Sessions API session itself, so the
+ * session_count delta would count it twice. The update still runs because the
+ * IAM fetch waits on its read-your-write token.
  * @returns false when the request was skipped, got a 401, or did not reach the
  * server, so a later token can send it again. Any other response counts as sent.
  */
-export async function updateUserSession(user: SessionUser): Promise<boolean> {
+export async function updateUserSession(
+  user: SessionUser,
+  usesSessionsApi: boolean,
+): Promise<boolean> {
   const { appId, subscriptionId } = user;
   const params = sessionBackendParams(user);
   if (!params) return false;
   const { alias, jwt } = params;
-  // TO DO: in future, we should aggregate session count in case network call fails
-  const updateUserPayload: IUpdateUser = {
-    refresh_device_metadata: true,
-    deltas: {
-      session_count: 1,
-    },
-  };
+  const updateUserPayload: IUpdateUser = usesSessionsApi
+    ? { refresh_device_metadata: true }
+    : { refresh_device_metadata: true, deltas: { session_count: 1 } };
 
   enforceAppId(appId);
   enforceAlias(alias);

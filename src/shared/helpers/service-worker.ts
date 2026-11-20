@@ -20,6 +20,7 @@ import {
 } from '../session/constants';
 import { initializeNewSession, isBackgroundOrigin, toHeartbeatInterval } from '../session/helpers';
 import type { Session, SessionUser, UpsertOrDeactivateSessionPayload } from '../session/types';
+import { SubscriptionType } from '../subscriptions/constants';
 import { getBaseUrl } from './general';
 import { getConfigAttribution } from './OutcomesHelper';
 
@@ -126,30 +127,36 @@ async function continueOrRestartSession(
 type NewSession = Session & Required<Pick<Session, 'sessionId' | 'usesSessionsApi'>>;
 
 async function startNewSession(
-  { appId, onesignalId, subscriptionId }: SessionUser,
+  { appId, onesignalId, subscriptionId, subscriptionType }: SessionUser,
   notificationId: string | null,
 ): Promise<NewSession> {
   return initializeNewSession({
     appId,
     notificationId,
     sessionId: crypto.randomUUID(),
-    usesSessionsApi: await isFeatureEnabledInWorker(FeatureFlag._SessionsV2ApiCutover),
+    // The public create rejects SafariLegacyPush, and an older page sends no
+    // type. Those sessions stay on the legacy path so they are still counted.
+    usesSessionsApi:
+      !!subscriptionType &&
+      subscriptionType !== SubscriptionType._SafariLegacyPush &&
+      (await isFeatureEnabledInWorker(FeatureFlag._SessionsV2ApiCutover)),
     onesignalId,
     subscriptionId,
   }) as NewSession;
 }
 
 async function reportSessionStart(user: SessionUser, session: NewSession): Promise<void> {
-  await Promise.all([
-    sendOnSessionCall(user, session),
-    session.usesSessionsApi && createServerSession(user, session.sessionId, session),
-  ]);
+  const queued = session.usesSessionsApi && (await enqueueCreate(user, session.sessionId, session));
+  // A create that failed to queue falls back to legacy reporting. Local ids still get a deferred create.
+  session.usesSessionsApi &&= queued || hasLocalId(user.onesignalId, user.subscriptionId);
+  await Promise.all([sendOnSessionCall(user, session), queued && drainSessionRequests()]);
 }
 
 /**
  * A new subscriber's first session starts before the user and subscription
- * exist, so its create waits for an upsert that brings the server IDs. The IDs
- * are re-pinned only once the create is queued, so a later upsert retries it.
+ * exist, so its create waits for an upsert or deactivate that brings the server
+ * IDs. The IDs are re-pinned only once the create is queued, so a later message
+ * retries it. Without it the session's end is skipped too.
  */
 async function enqueueDeferredCreate(user: SessionUser, session: Session): Promise<boolean> {
   const { sessionId, usesSessionsApi, onesignalId, subscriptionId } = session;
@@ -160,14 +167,6 @@ async function enqueueDeferredCreate(user: SessionUser, session: Session): Promi
   session.subscriptionId = user.subscriptionId;
   await db.put('Sessions', session);
   return true;
-}
-
-async function createServerSession(
-  user: SessionUser,
-  sessionId: string,
-  session: Session,
-): Promise<void> {
-  if (await enqueueCreate(user, sessionId, session)) await drainSessionRequests();
 }
 
 async function enqueueCreate(
@@ -218,6 +217,9 @@ export async function deactivateSession(
     Log._debug('No active session to deactivate');
     return undefined;
   }
+  // Drained now: an update waits a few seconds after its create, so a create
+  // drained with the end would leave the end for a later drain.
+  const createQueued = await enqueueDeferredCreate(options, existingSession);
 
   // The finalize step reuses this payload after the threshold, so a token the
   // page refreshes in that window is not used for the session_time request.
@@ -245,10 +247,9 @@ export async function deactivateSession(
    */
   if (existingSession.status === SessionStatus._Inactive) {
     // A blur made the session inactive without a checkpoint; the tab hiding later does.
-    if (await enqueueCheckpoint(options, existingSession)) {
-      if (!(await saveCheckpointedDuration(existingSession))) return undefined;
-      void drainSessionRequests();
-    }
+    const checkpointQueued = await enqueueCheckpoint(options, existingSession);
+    if (checkpointQueued && !(await saveCheckpointedDuration(existingSession))) return undefined;
+    if (checkpointQueued || createQueued) void drainSessionRequests();
     return cancelableTimeout(finalizeSWSession, thresholdInSeconds);
   }
 
@@ -274,7 +275,7 @@ export async function deactivateSession(
   const checkpointQueued = await enqueueCheckpoint(options, existingSession);
   await db.put('Sessions', existingSession);
   // Not awaited, so the caller gets the finalize timer without waiting on the network.
-  if (checkpointQueued) void drainSessionRequests();
+  if (checkpointQueued || createQueued) void drainSessionRequests();
 
   // Started once the row is inactive, since finalize skips a row that is not.
   return cancelableTimeout(finalizeSWSession, thresholdInSeconds);
@@ -342,7 +343,7 @@ async function sendOnSessionCall(user: SessionUser, session: Session) {
   void resetSentUniqueOutcomes();
 
   // USER MODEL TO DO: handle potential 404 - user does not exist
-  const sent = await updateUserSession(user);
+  const sent = await updateUserSession(user, !!session.usesSessionsApi);
   // Only a token can arrive later. An anonymous user under Identity Verification
   // has no backend user, so that skip does not leave the session pending.
   if (!sent && user.jwtRequired && user.externalId) {
@@ -358,7 +359,7 @@ async function sendPendingOnSession(user: SessionUser, session: Session): Promis
   await db.put('Sessions', session);
   // The count belongs to the user who started the session.
   if (!pendingFor || pendingFor !== user.externalId) return;
-  const sent = await updateUserSession(user);
+  const sent = await updateUserSession(user, !!session.usesSessionsApi);
   if (sent) return;
   await markOnSessionPending(session, pendingFor);
 }
@@ -383,7 +384,8 @@ async function finalizeSession(
   // Ends at the moment the last tab went hidden, not when the threshold expired.
   const endedAt = session.lastDeactivatedTimestamp ?? Date.now();
   const endQueued = await enqueueDurationUpdate(options, session, endedAt);
-  if (sendOnFocusEnabled) {
+  // The backend derives session_time and the duration outcome from a Sessions API session.
+  if (sendOnFocusEnabled && !session.usesSessionsApi) {
     Log._debug(`on_focus duration: ${session.accumulatedDuration}s`);
     const attribution = await getConfigAttribution(outcomesConfig);
     Log._debug('on_focus attribution', attribution);

@@ -1132,7 +1132,7 @@ describe('ServiceWorker', () => {
         test('a new session enqueues a create with its start time and pinned IDs, then drains', async () => {
           await enableSessionsApi();
 
-          await upsert({ subscriptionType: SubscriptionType._SafariLegacyPush });
+          await upsert({ subscriptionType: SubscriptionType._FirefoxPush });
 
           const current = (await getCurrentSession())!;
           expect(await queued()).toEqual([
@@ -1142,16 +1142,14 @@ describe('ServiceWorker', () => {
               sessionId: current.sessionId,
               onesignalId: ONESIGNAL_ID,
               subscriptionId: SUB_ID,
-              subscriptionType: SubscriptionType._SafariLegacyPush,
+              subscriptionType: SubscriptionType._FirefoxPush,
               startTime: current.startTimestamp,
               idempotencyKey: expect.stringMatching(/^[0-9a-f-]{36}$/),
             }),
           ]);
           expect(drainSessionRequests).toHaveBeenCalled();
-          // The legacy start is still sent.
-          expect(updateUserFn).toHaveBeenCalledWith(
-            expect.objectContaining({ deltas: { session_count: 1 } }),
-          );
+          // The backend counts the session, so the user update carries no delta.
+          expect(updateUserFn).toHaveBeenCalledExactlyOnceWith({ refresh_device_metadata: true });
         });
 
         test('upserts from other tabs during the session enqueue no second create', async () => {
@@ -1444,18 +1442,24 @@ describe('ServiceWorker', () => {
           ]);
         });
 
-        test('a payload without a subscription type enqueues no create', async () => {
+        // The public create rejects SafariLegacyPush, and an older page sends no type.
+        test.each([
+          ['no subscription type', undefined],
+          ['SafariLegacyPush', SubscriptionType._SafariLegacyPush],
+        ])('a session with %s stays on the legacy path', async (_, subscriptionType) => {
           await enableSessionsApi();
 
-          await upsert({ subscriptionType: undefined });
+          await upsert({ subscriptionType });
 
           expect(await queued()).toEqual([]);
-          expect(updateUserFn).toHaveBeenCalledWith(
-            expect.objectContaining({ deltas: { session_count: 1 } }),
-          );
+          expect((await getCurrentSession())!.usesSessionsApi).toBe(false);
+          expect(updateUserFn).toHaveBeenCalledExactlyOnceWith({
+            refresh_device_metadata: true,
+            deltas: { session_count: 1 },
+          });
         });
 
-        test('a queue failure still sends the legacy session start', async () => {
+        test('a create that fails to queue falls back to the legacy path', async () => {
           vi.spyOn(Log, '_error').mockImplementation(() => {});
           vi.spyOn(navigator.locks, 'request').mockImplementationOnce(() => {
             throw new TypeError('locks unavailable');
@@ -1464,9 +1468,11 @@ describe('ServiceWorker', () => {
 
           await upsert();
 
-          expect(updateUserFn).toHaveBeenCalledWith(
-            expect.objectContaining({ deltas: { session_count: 1 } }),
-          );
+          expect((await getCurrentSession())!.usesSessionsApi).toBe(false);
+          expect(updateUserFn).toHaveBeenCalledExactlyOnceWith({
+            refresh_device_metadata: true,
+            deltas: { session_count: 1 },
+          });
         });
       });
 
@@ -1523,10 +1529,24 @@ describe('ServiceWorker', () => {
           ]);
           expect(drainSessionRequests).toHaveBeenCalled();
           expect(await getCurrentSession()).toBeNull();
-          // The legacy duration is still sent.
-          expect(updateUserFn).toHaveBeenCalledWith(
-            expect.objectContaining({ deltas: { session_time: 42 } }),
-          );
+          expect(updateUserFn).not.toHaveBeenCalled();
+        });
+
+        test('sends no os__session_duration outcome for a clicked session', async () => {
+          const outcomeFn = vi.fn();
+          getHandler({
+            uri: '**/outcomes/measure',
+            method: 'post',
+            status: 200,
+            callback: outcomeFn,
+          });
+          await putNotificationClickedForOutcomes(appId, clickOutcome);
+          await db.put('Sessions', apiSession());
+
+          await deactivate();
+
+          expect(await getCurrentSession()).toBeNull();
+          expect(outcomeFn).not.toHaveBeenCalled();
         });
 
         test('a session resumed before the threshold is not ended by the pending finalize', async () => {
@@ -1634,24 +1654,29 @@ describe('ServiceWorker', () => {
           expect(sessionsAtDrain.every((id) => id === current.sessionId)).toBe(true);
         });
 
+        // Holds the session end's enqueue, so the refresh that finalizes the
+        // expired session is still running when the next message arrives.
+        const holdFirstEnqueue = () => {
+          let release!: () => void;
+          const held = new Promise<void>((resolve) => (release = resolve));
+          let entered = false;
+          const request = navigator.locks.request.bind(navigator.locks);
+          vi.spyOn(navigator.locks, 'request').mockImplementationOnce(((
+            name: string,
+            fn: LockGrantedCallback<unknown>,
+          ) => {
+            entered = true;
+            return held.then(() => request(name, fn));
+          }) as never);
+          return { isEntered: () => entered, release };
+        };
+
         test('two overlapping upserts on an expired session end it and start the next once', async () => {
           await db.put('Options', {
             key: 'featureFlags',
             value: JSON.stringify([FeatureFlag._SessionsV2ApiCutover]),
           });
-          let releaseSessionTime!: () => void;
-          const sessionTimeHeld = new Promise<void>((resolve) => (releaseSessionTime = resolve));
-          server.use(
-            http.patch(
-              `**/apps/${appId}/users/by/onesignal_id/${ONESIGNAL_ID}`,
-              async ({ request }) => {
-                const body = (await request.json()) as { deltas: Record<string, number> };
-                updateUserFn(body);
-                if (body.deltas.session_time !== undefined) await sessionTimeHeld;
-                return HttpResponse.json({});
-              },
-            ),
-          );
+          setUpdateUserResponse();
           await db.put('Sessions', apiSession());
           const upsertMessage = () =>
             new ExtendableMessageEvent('message', {
@@ -1662,17 +1687,17 @@ describe('ServiceWorker', () => {
                 sessionThreshold: 30,
               } satisfies UpsertOrDeactivateSessionPayload,
             });
+          const enqueue = holdFirstEnqueue();
 
           await dispatchEvent(upsertMessage());
-          await vi.waitUntil(() => updateUserFn.mock.calls.length === 1, { interval: 1 });
+          await vi.waitUntil(enqueue.isEntered, { interval: 1 });
           await dispatchEvent(upsertMessage());
-          releaseSessionTime();
-          await vi.waitUntil(() => updateUserFn.mock.calls.length >= 2, { interval: 1 });
+          enqueue.release();
+          await vi.waitUntil(() => updateUserFn.mock.calls.length >= 1, { interval: 1 });
           await flush();
           await db.delete('Options', 'featureFlags');
 
-          const deltas = updateUserFn.mock.calls.map(([body]) => Object.keys(body.deltas)[0]);
-          expect(deltas).toEqual(['session_time', 'session_count']);
+          expect(updateUserFn).toHaveBeenCalledExactlyOnceWith({ refresh_device_metadata: true });
           const current = (await getCurrentSession())!;
           expect((await queued()).map((r) => [r.kind, r.sessionId])).toEqual([
             ['update', 'ending-session'],
@@ -1680,6 +1705,7 @@ describe('ServiceWorker', () => {
           ]);
         });
 
+        // A legacy session, so its session_time request shows each finalize.
         test('a finalize that fires during an upsert waits for it and does not end the session twice', async () => {
           let releaseSessionTime!: () => void;
           const sessionTimeHeld = new Promise<void>((resolve) => (releaseSessionTime = resolve));
@@ -1694,7 +1720,7 @@ describe('ServiceWorker', () => {
               },
             ),
           );
-          await db.put('Sessions', apiSession());
+          await db.put('Sessions', apiSession({ usesSessionsApi: false }));
           let finalize: (() => Promise<void>) | undefined;
           vi.mocked(cancelableTimeout).mockImplementationOnce((callback) => {
             finalize = callback;
@@ -1723,7 +1749,6 @@ describe('ServiceWorker', () => {
 
           const deltas = updateUserFn.mock.calls.map(([body]) => Object.keys(body.deltas)[0]);
           expect(deltas).toEqual(['session_time', 'session_count']);
-          expect((await queued()).filter((r) => r.kind === 'update')).toHaveLength(1);
           expect((await getCurrentSession())!.status).toBe(SessionStatus._Active);
         });
 
@@ -1766,6 +1791,31 @@ describe('ServiceWorker', () => {
           expect(drainSessionRequests).toHaveBeenCalled();
         });
 
+        test('a session started with local ids gets its create and end once a deactivate brings server ids', async () => {
+          await db.put(
+            'Sessions',
+            apiSession({ onesignalId: 'local-user', subscriptionId: 'local-subscription' }),
+          );
+
+          await deactivate();
+
+          expect(await queued()).toEqual([
+            expect.objectContaining({
+              kind: 'create',
+              sessionId: 'ending-session',
+              onesignalId: ONESIGNAL_ID,
+              subscriptionId: SUB_ID,
+            }),
+            expect.objectContaining({
+              kind: 'update',
+              sessionId: 'ending-session',
+              onesignalId: ONESIGNAL_ID,
+              subscriptionId: SUB_ID,
+              endTime: deactivatedAt,
+            }),
+          ]);
+        });
+
         test.each<[string, Partial<Session>, Partial<UpsertOrDeactivateSessionPayload>]>([
           ['a legacy session', { usesSessionsApi: false }, {}],
           [
@@ -1773,19 +1823,28 @@ describe('ServiceWorker', () => {
             { usesSessionsApi: undefined, sessionId: undefined },
             {},
           ],
-          ['a session that still has local ids', { onesignalId: 'local-user' }, {}],
+          [
+            'a session whose page still has local ids',
+            { onesignalId: 'local-user' },
+            { onesignalId: 'local-user' },
+          ],
           ['a page that sends no subscription type', {}, { subscriptionType: undefined }],
         ])('%s enqueues no end', async (_, overrides, payload) => {
-          await db.put('Sessions', apiSession(overrides));
+          const stored = apiSession(overrides);
+          await db.put('Sessions', stored);
 
           await deactivate(payload);
 
           expect(await queued()).toEqual([]);
           expect(drainSessionRequests).not.toHaveBeenCalled();
           expect(await getCurrentSession()).toBeNull();
-          expect(updateUserFn).toHaveBeenCalledWith(
-            expect.objectContaining({ deltas: { session_time: 42 } }),
-          );
+          if (stored.usesSessionsApi) {
+            expect(updateUserFn).not.toHaveBeenCalled();
+          } else {
+            expect(updateUserFn).toHaveBeenCalledWith(
+              expect.objectContaining({ deltas: { session_time: 42 } }),
+            );
+          }
         });
       });
 
@@ -2036,6 +2095,39 @@ describe('ServiceWorker', () => {
           expect(await queued()).toEqual([]);
         });
 
+        // An update waits a few seconds after its create, so a create drained only
+        // with the end would leave the end for a later drain.
+        test('a blur that brings server ids drains the deferred create before the finalize', async () => {
+          await db.put(
+            'Sessions',
+            activeSession({ onesignalId: 'local-user', subscriptionId: 'local-subscription' }),
+          );
+
+          await deactivate({ sessionOrigin: SessionOrigin._Blur });
+
+          expect(await queued()).toEqual([
+            expect.objectContaining({ kind: 'create', onesignalId: ONESIGNAL_ID }),
+          ]);
+          expect(drainSessionRequests).toHaveBeenCalledOnce();
+        });
+
+        test('a session started with local ids gets its create and checkpoint once a deactivate brings server ids', async () => {
+          await db.put(
+            'Sessions',
+            activeSession({ onesignalId: 'local-user', subscriptionId: 'local-subscription' }),
+          );
+
+          await deactivate();
+
+          const [create, checkpoint, ...rest] = await queued();
+          expect(create).toMatchObject({ kind: 'create', onesignalId: ONESIGNAL_ID });
+          expect(checkpoint).toMatchObject({ kind: 'update', onesignalId: ONESIGNAL_ID });
+          expect(checkpoint).toMatchObject({ endTime: undefined });
+          expect(rest).toEqual([]);
+          expect(drainSessionRequests).toHaveBeenCalled();
+          expect((await getCurrentSession())!.onesignalId).toBe(ONESIGNAL_ID);
+        });
+
         test.each<[string, Partial<Session>, Partial<UpsertOrDeactivateSessionPayload>]>([
           ['a legacy session', { usesSessionsApi: false }, {}],
           [
@@ -2043,7 +2135,11 @@ describe('ServiceWorker', () => {
             { usesSessionsApi: undefined, sessionId: undefined },
             {},
           ],
-          ['a session that still has local ids', { onesignalId: 'local-user' }, {}],
+          [
+            'a session whose page still has local ids',
+            { onesignalId: 'local-user' },
+            { onesignalId: 'local-user' },
+          ],
           ['a page that sends no subscription type', {}, { subscriptionType: undefined }],
         ])('%s enqueues no checkpoint', async (_, overrides, payload) => {
           await db.put('Sessions', activeSession(overrides));
@@ -2388,6 +2484,21 @@ describe('ServiceWorker', () => {
           expect(current!.onSessionPendingFor).toBeUndefined();
         });
 
+        test('a pending Sessions API session sends on_session without the session_count delta', async () => {
+          getHandler({ uri: externalIdUri, method: 'patch', status: 200, callback: updateUserFn });
+          await db.put('Sessions', {
+            ...session,
+            usesSessionsApi: true,
+            status: SessionStatus._Inactive,
+            lastDeactivatedTimestamp: Date.now(),
+            onSessionPendingFor: EXTERNAL_ID,
+          });
+
+          await upsertWith({ jwtRequired: true, externalId: EXTERNAL_ID, jwt: JWT });
+
+          expect(updateUserFn).toHaveBeenCalledExactlyOnceWith({ refresh_device_metadata: true });
+        });
+
         // An anonymous user has no backend user under IV, so no token can complete this request later.
         test('an anonymous user does not leave the session pending', async () => {
           setUpdateUserResponse();
@@ -2601,14 +2712,17 @@ describe('ServiceWorker', () => {
             () => new Promise((resolve) => setTimeout(() => resolve([mockClient]), 30)),
           );
 
-          const sent = await updateUserSession({
-            appId,
-            onesignalId: ONESIGNAL_ID,
-            subscriptionId: SUB_ID,
-            jwtRequired: true,
-            externalId: EXTERNAL_ID,
-            jwt: JWT,
-          });
+          const sent = await updateUserSession(
+            {
+              appId,
+              onesignalId: ONESIGNAL_ID,
+              subscriptionId: SUB_ID,
+              jwtRequired: true,
+              externalId: EXTERNAL_ID,
+              jwt: JWT,
+            },
+            false,
+          );
 
           expect(sent).toBe(false);
           expect(postMessageFn).toHaveBeenCalledExactlyOnceWith({
