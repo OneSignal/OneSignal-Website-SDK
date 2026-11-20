@@ -148,8 +148,9 @@ async function reportSessionStart(user: SessionUser, session: NewSession): Promi
 
 /**
  * A new subscriber's first session starts before the user and subscription
- * exist, so its create waits for an upsert that brings the server IDs. The IDs
- * are re-pinned only once the create is queued, so a later upsert retries it.
+ * exist, so its create waits for an upsert or deactivate that brings the server
+ * IDs. The IDs are re-pinned only once the create is queued, so a later message
+ * retries it. Without it the session's end is skipped too.
  */
 async function enqueueDeferredCreate(user: SessionUser, session: Session): Promise<boolean> {
   const { sessionId, usesSessionsApi, onesignalId, subscriptionId } = session;
@@ -218,6 +219,8 @@ export async function deactivateSession(
     Log._debug('No active session to deactivate');
     return undefined;
   }
+  // Queued without a drain: a checkpoint or the finalize step sends it first.
+  await enqueueDeferredCreate(options, existingSession);
 
   // The finalize step reuses this payload after the threshold, so a token the
   // page refreshes in that window is not used for the session_time request.

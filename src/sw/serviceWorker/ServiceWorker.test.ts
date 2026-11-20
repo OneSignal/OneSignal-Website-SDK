@@ -1779,6 +1779,31 @@ describe('ServiceWorker', () => {
           expect(drainSessionRequests).toHaveBeenCalled();
         });
 
+        test('a session started with local ids gets its create and end once a deactivate brings server ids', async () => {
+          await db.put(
+            'Sessions',
+            apiSession({ onesignalId: 'local-user', subscriptionId: 'local-subscription' }),
+          );
+
+          await deactivate();
+
+          expect(await queued()).toEqual([
+            expect.objectContaining({
+              kind: 'create',
+              sessionId: 'ending-session',
+              onesignalId: ONESIGNAL_ID,
+              subscriptionId: SUB_ID,
+            }),
+            expect.objectContaining({
+              kind: 'update',
+              sessionId: 'ending-session',
+              onesignalId: ONESIGNAL_ID,
+              subscriptionId: SUB_ID,
+              endTime: deactivatedAt,
+            }),
+          ]);
+        });
+
         test.each<[string, Partial<Session>, Partial<UpsertOrDeactivateSessionPayload>]>([
           ['a legacy session', { usesSessionsApi: false }, {}],
           [
@@ -1786,7 +1811,11 @@ describe('ServiceWorker', () => {
             { usesSessionsApi: undefined, sessionId: undefined },
             {},
           ],
-          ['a session that still has local ids', { onesignalId: 'local-user' }, {}],
+          [
+            'a session whose page still has local ids',
+            { onesignalId: 'local-user' },
+            { onesignalId: 'local-user' },
+          ],
           ['a page that sends no subscription type', {}, { subscriptionType: undefined }],
         ])('%s enqueues no end', async (_, overrides, payload) => {
           const stored = apiSession(overrides);
@@ -2054,6 +2083,23 @@ describe('ServiceWorker', () => {
           expect(await queued()).toEqual([]);
         });
 
+        test('a session started with local ids gets its create and checkpoint once a deactivate brings server ids', async () => {
+          await db.put(
+            'Sessions',
+            activeSession({ onesignalId: 'local-user', subscriptionId: 'local-subscription' }),
+          );
+
+          await deactivate();
+
+          const [create, checkpoint, ...rest] = await queued();
+          expect(create).toMatchObject({ kind: 'create', onesignalId: ONESIGNAL_ID });
+          expect(checkpoint).toMatchObject({ kind: 'update', onesignalId: ONESIGNAL_ID });
+          expect(checkpoint).toMatchObject({ endTime: undefined });
+          expect(rest).toEqual([]);
+          expect(drainSessionRequests).toHaveBeenCalled();
+          expect((await getCurrentSession())!.onesignalId).toBe(ONESIGNAL_ID);
+        });
+
         test.each<[string, Partial<Session>, Partial<UpsertOrDeactivateSessionPayload>]>([
           ['a legacy session', { usesSessionsApi: false }, {}],
           [
@@ -2061,7 +2107,11 @@ describe('ServiceWorker', () => {
             { usesSessionsApi: undefined, sessionId: undefined },
             {},
           ],
-          ['a session that still has local ids', { onesignalId: 'local-user' }, {}],
+          [
+            'a session whose page still has local ids',
+            { onesignalId: 'local-user' },
+            { onesignalId: 'local-user' },
+          ],
           ['a page that sends no subscription type', {}, { subscriptionType: undefined }],
         ])('%s enqueues no checkpoint', async (_, overrides, payload) => {
           await db.put('Sessions', activeSession(overrides));
