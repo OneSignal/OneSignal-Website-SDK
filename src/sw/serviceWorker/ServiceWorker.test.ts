@@ -2131,6 +2131,12 @@ describe('ServiceWorker', () => {
           expect(await queued()).toHaveLength(1);
         });
 
+        test.each([0, -60, NaN])('an invalid interval of %s uses the default', async (value) => {
+          await db.put('Sessions', activeSession(300, { checkpointedDuration: 100 }));
+          await heartbeat({ heartbeatInterval: value });
+          expect(await queued()).toHaveLength(0);
+        });
+
         test('a short interval still waits most of it', async () => {
           await db.put('Sessions', activeSession(30, { checkpointedDuration: 100 }));
           await heartbeat({ heartbeatInterval: 60 });

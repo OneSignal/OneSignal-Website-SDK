@@ -15,11 +15,10 @@ import type { OutcomesNotificationClicked } from '../models/OutcomesNotification
 import Path from '../models/Path';
 import {
   CLICK_ATTRIBUTION_WINDOW_SECONDS,
-  DEFAULT_HEARTBEAT_INTERVAL_SECONDS,
   HEARTBEAT_SLACK_SECONDS,
   SessionStatus,
 } from '../session/constants';
-import { initializeNewSession, isBackgroundOrigin } from '../session/helpers';
+import { initializeNewSession, isBackgroundOrigin, toHeartbeatInterval } from '../session/helpers';
 import type { Session, SessionUser, UpsertOrDeactivateSessionPayload } from '../session/types';
 import { getBaseUrl } from './general';
 import { getConfigAttribution } from './OutcomesHelper';
@@ -315,7 +314,7 @@ async function enqueueHeartbeat(options: UpsertOrDeactivateSessionPayload): Prom
   const duration =
     session.accumulatedDuration +
     timeInSecondsBetweenTimestamps(Date.now(), session.lastActivatedTimestamp);
-  const interval = options.heartbeatInterval ?? DEFAULT_HEARTBEAT_INTERVAL_SECONDS;
+  const interval = toHeartbeatInterval(options.heartbeatInterval);
   // Page timers start before the worker's debounced activation, so a tick
   // can land a little short of a full interval. Capped so a short interval
   // still waits most of it.

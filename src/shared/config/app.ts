@@ -2,11 +2,7 @@ import { downloadServerAppConfig } from '../api/page';
 import { InvalidAppIdError } from '../errors/common';
 import { setJwtRequirement } from '../helpers/localStorage';
 import { isValidUuid } from '../helpers/validators';
-import {
-  DEFAULT_HEARTBEAT_INTERVAL_SECONDS,
-  MAX_HEARTBEAT_INTERVAL_SECONDS,
-  MIN_HEARTBEAT_INTERVAL_SECONDS,
-} from '../session/constants';
+import { toHeartbeatInterval } from '../session/helpers';
 import { checkRestrictedOrigin, checkUnsupportedSubdomain } from './domain';
 import {
   getConfigIntegrationKind,
@@ -97,15 +93,8 @@ export function getMergedConfig(
       serverConfig.features.session_threshold ?? SERVER_CONFIG_DEFAULTS_SESSION.reportingThreshold,
     enableSessionDuration:
       serverConfig.features.web_on_focus_enabled ?? SERVER_CONFIG_DEFAULTS_SESSION.enableOnFocus,
-    heartbeatInterval: getHeartbeatIntervalSeconds(serverConfig),
+    heartbeatInterval: toHeartbeatInterval(
+      serverConfig.config.sessions?.heartbeat_interval_seconds,
+    ),
   };
-}
-
-function getHeartbeatIntervalSeconds(serverConfig: ServerAppConfig): number {
-  const seconds = serverConfig.config.sessions?.heartbeat_interval_seconds;
-  if (typeof seconds !== 'number' || !(seconds > 0)) return DEFAULT_HEARTBEAT_INTERVAL_SECONDS;
-  return Math.min(
-    Math.max(seconds, MIN_HEARTBEAT_INTERVAL_SECONDS),
-    MAX_HEARTBEAT_INTERVAL_SECONDS,
-  );
 }
