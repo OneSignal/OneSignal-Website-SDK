@@ -219,7 +219,7 @@ export async function deactivateSession(
     Log._debug('No active session to deactivate');
     return undefined;
   }
-  // Queued without a drain: a checkpoint or the finalize step sends it first.
+  // Sent by the drain after the checkpoint or end below, which go out in queue order behind it.
   await enqueueDeferredCreate(options, existingSession);
 
   // The finalize step reuses this payload after the threshold, so a token the
