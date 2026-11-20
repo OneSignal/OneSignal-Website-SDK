@@ -2,6 +2,7 @@ import { downloadServerAppConfig } from '../api/page';
 import { InvalidAppIdError } from '../errors/common';
 import { setJwtRequirement } from '../helpers/localStorage';
 import { isValidUuid } from '../helpers/validators';
+import { toHeartbeatInterval } from '../session/helpers';
 import { checkRestrictedOrigin, checkUnsupportedSubdomain } from './domain';
 import {
   getConfigIntegrationKind,
@@ -92,5 +93,8 @@ export function getMergedConfig(
       serverConfig.features.session_threshold ?? SERVER_CONFIG_DEFAULTS_SESSION.reportingThreshold,
     enableSessionDuration:
       serverConfig.features.web_on_focus_enabled ?? SERVER_CONFIG_DEFAULTS_SESSION.enableOnFocus,
+    heartbeatInterval: toHeartbeatInterval(
+      serverConfig.config.sessions?.heartbeat_interval_seconds,
+    ),
   };
 }

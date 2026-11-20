@@ -50,6 +50,8 @@ interface BaseSessionPayload {
   sessionOrigin: SessionOriginValue;
   isSafari: boolean;
   outcomesConfig: OutcomesConfig;
+  /** Seconds between heartbeats. Unset when sent by an older page SDK. */
+  heartbeatInterval?: number;
 }
 
 /**

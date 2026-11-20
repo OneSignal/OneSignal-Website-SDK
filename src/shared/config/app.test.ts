@@ -306,6 +306,25 @@ describe('Config Helpers', () => {
     expect(getMergedConfig(userConfig, withIcon).defaultIconUrl).toBeNull();
   });
 
+  test('reads the session heartbeat interval from the server config', () => {
+    const userConfig = TestContext.getFakeAppUserConfig();
+    const interval = (value: unknown) =>
+      getMergedConfig(userConfig, {
+        ...serverConfig,
+        config: { ...serverConfig.config, sessions: { heartbeat_interval_seconds: value } },
+      }).heartbeatInterval;
+
+    expect(interval(300)).toBe(300);
+    // Clamped to between 1 minute and 1 day.
+    expect(interval(1)).toBe(60);
+    expect(interval(86_401)).toBe(86_400);
+    expect(interval(Infinity)).toBe(86_400);
+    [undefined, null, 0, -60, '300', NaN, true].forEach((invalid) =>
+      expect(interval(invalid)).toBe(1800),
+    );
+    expect(getMergedConfig(userConfig, serverConfig).heartbeatInterval).toBe(1800);
+  });
+
   test('should limit categories to max count', () => {
     const categories: TagCategory[] = [
       { tag: 'tag1', label: 'label1' },

@@ -19,7 +19,7 @@ import { setFeatureFlags, setJwtRequirement } from 'src/shared/helpers/localStor
 import { setPageViewCount } from 'src/shared/helpers/pageview';
 import Log from 'src/shared/libraries/Log';
 import { WorkerMessengerCommand } from 'src/shared/libraries/workerMessenger/constants';
-import { HEARTBEAT_INTERVAL_SECONDS, SessionOrigin } from 'src/shared/session/constants';
+import { DEFAULT_HEARTBEAT_INTERVAL_SECONDS, SessionOrigin } from 'src/shared/session/constants';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import {
   afterEach,
@@ -271,7 +271,7 @@ describe('SessionManager', () => {
   });
 
   describe('heartbeat', () => {
-    const INTERVAL_MS = HEARTBEAT_INTERVAL_SECONDS * 1000;
+    const INTERVAL_MS = DEFAULT_HEARTBEAT_INTERVAL_SECONDS * 1000;
     let sm: SessionManager;
     let unicastSpy: MockInstance;
     const visibility = (state: DocumentVisibilityState) =>
@@ -333,6 +333,19 @@ describe('SessionManager', () => {
       expect(heartbeats()).toHaveLength(2);
       await vi.advanceTimersByTimeAsync(INTERVAL_MS);
       expect(heartbeats()).toHaveLength(3);
+    });
+
+    test('uses the heartbeat interval from the app config and sends it to the worker', async () => {
+      OneSignal._context._appConfig.heartbeatInterval = 300;
+
+      await sm._upsertSession(SessionOrigin._UserCreate);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(heartbeats()[0][1]).toMatchObject({ heartbeatInterval: 300 });
+
+      await vi.advanceTimersByTimeAsync(300_000 - 1);
+      expect(heartbeats()).toHaveLength(1);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(heartbeats()).toHaveLength(2);
     });
 
     test('hiding the page stops the timer, and showing it restarts the interval', async () => {

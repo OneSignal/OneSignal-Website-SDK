@@ -68,6 +68,8 @@ export interface AppConfig {
   // TODO: Cleanup: pageUrl is also on AppUserConfig
   pageUrl?: string;
   sessionThreshold?: number;
+  /** Seconds of active session time between session heartbeats. */
+  heartbeatInterval: number;
 
   siteName: string;
   defaultIconUrl: string | null;
@@ -209,6 +211,9 @@ export interface ServerAppConfig {
     subdomain: string | undefined;
     // The server sends this key only when the value is true.
     jwt_required?: boolean;
+    sessions?: {
+      heartbeat_interval_seconds?: unknown;
+    };
   };
 
   generated_at: number;

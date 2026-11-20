@@ -15,11 +15,10 @@ import type { OutcomesNotificationClicked } from '../models/OutcomesNotification
 import Path from '../models/Path';
 import {
   CLICK_ATTRIBUTION_WINDOW_SECONDS,
-  HEARTBEAT_INTERVAL_SECONDS,
   HEARTBEAT_SLACK_SECONDS,
   SessionStatus,
 } from '../session/constants';
-import { initializeNewSession, isBackgroundOrigin } from '../session/helpers';
+import { initializeNewSession, isBackgroundOrigin, toHeartbeatInterval } from '../session/helpers';
 import type { Session, SessionUser, UpsertOrDeactivateSessionPayload } from '../session/types';
 import { getBaseUrl } from './general';
 import { getConfigAttribution } from './OutcomesHelper';
@@ -315,10 +314,12 @@ async function enqueueHeartbeat(options: UpsertOrDeactivateSessionPayload): Prom
   const duration =
     session.accumulatedDuration +
     timeInSecondsBetweenTimestamps(Date.now(), session.lastActivatedTimestamp);
+  const interval = toHeartbeatInterval(options.heartbeatInterval);
   // Page timers start before the worker's debounced activation, so a tick
-  // can land a little short of a full interval.
-  const due =
-    (session.checkpointedDuration ?? 0) + HEARTBEAT_INTERVAL_SECONDS - HEARTBEAT_SLACK_SECONDS;
+  // can land a little short of a full interval. Capped so a short interval
+  // still waits most of it.
+  const slack = Math.min(HEARTBEAT_SLACK_SECONDS, interval / 10);
+  const due = (session.checkpointedDuration ?? 0) + interval - slack;
   if (duration < due) return false;
   if (!(await enqueueDurationUpdate(options, { ...session, accumulatedDuration: duration }))) {
     return false;
