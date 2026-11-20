@@ -146,10 +146,10 @@ async function startNewSession(
 }
 
 async function reportSessionStart(user: SessionUser, session: NewSession): Promise<void> {
-  await Promise.all([
-    sendOnSessionCall(user, session),
-    session.usesSessionsApi && createServerSession(user, session.sessionId, session),
-  ]);
+  const queued = session.usesSessionsApi && (await enqueueCreate(user, session.sessionId, session));
+  // A create that failed to queue falls back to legacy reporting. Local ids still get a deferred create.
+  session.usesSessionsApi &&= queued || hasLocalId(user.onesignalId, user.subscriptionId);
+  await Promise.all([sendOnSessionCall(user, session), queued && drainSessionRequests()]);
 }
 
 /**
@@ -167,14 +167,6 @@ async function enqueueDeferredCreate(user: SessionUser, session: Session): Promi
   session.subscriptionId = user.subscriptionId;
   await db.put('Sessions', session);
   return true;
-}
-
-async function createServerSession(
-  user: SessionUser,
-  sessionId: string,
-  session: Session,
-): Promise<void> {
-  if (await enqueueCreate(user, sessionId, session)) await drainSessionRequests();
 }
 
 async function enqueueCreate(

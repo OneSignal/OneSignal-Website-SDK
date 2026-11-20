@@ -1459,7 +1459,7 @@ describe('ServiceWorker', () => {
           });
         });
 
-        test('a queue failure still sends the user update', async () => {
+        test('a create that fails to queue falls back to the legacy path', async () => {
           vi.spyOn(Log, '_error').mockImplementation(() => {});
           vi.spyOn(navigator.locks, 'request').mockImplementationOnce(() => {
             throw new TypeError('locks unavailable');
@@ -1468,7 +1468,11 @@ describe('ServiceWorker', () => {
 
           await upsert();
 
-          expect(updateUserFn).toHaveBeenCalledExactlyOnceWith({ refresh_device_metadata: true });
+          expect((await getCurrentSession())!.usesSessionsApi).toBe(false);
+          expect(updateUserFn).toHaveBeenCalledExactlyOnceWith({
+            refresh_device_metadata: true,
+            deltas: { session_count: 1 },
+          });
         });
       });
 
