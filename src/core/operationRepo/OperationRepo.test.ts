@@ -28,7 +28,12 @@ import { SetPropertyOperation } from '../operations/SetPropertyOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
-import { OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF, OP_REPO_POST_CREATE_DELAY } from './constants';
+import {
+  OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF,
+  OP_REPO_MAX_FAIL_RETRY_BACKOFF,
+  OP_REPO_MAX_OFFLINE_WAIT_RETRIES,
+  OP_REPO_POST_CREATE_DELAY,
+} from './constants';
 import { NewRecordsState } from './NewRecordsState';
 import { OperationRepo, type OperationQueueItem } from './OperationRepo';
 
@@ -1406,6 +1411,14 @@ describe('OperationRepo', () => {
       expect(delaySpy).toHaveBeenCalledWith(30000);
     });
 
+    test('caps the retry delay but not the Retry-After delay', async () => {
+      await opRepo._delayBeforeNextExecution(120);
+      expect(delaySpy).toHaveBeenLastCalledWith(OP_REPO_MAX_FAIL_RETRY_BACKOFF);
+
+      await opRepo._delayBeforeNextExecution(120, 60);
+      expect(delaySpy).toHaveBeenLastCalledWith(60_000);
+    });
+
     test('can handle fail pause op repo operation', async () => {
       executeFn.mockResolvedValueOnce({
         _result: ExecutionResult._FailPauseOpRepo,
@@ -1497,15 +1510,16 @@ describe('OperationRepo', () => {
       expect(opRepo._getNextOps(0)).toBeNull();
     });
 
-    test('does not start operations while the browser is offline', () => {
+    test('sends operations while the browser reports offline', async () => {
       const onLineSpy = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
-      opRepo._enqueue(mockOperation);
+      const resolved = vi.fn();
+      void opRepo._enqueueAndWait(mockOperation).then(resolved);
 
-      expect(opRepo._getNextOps(0)).toBeNull();
-      expect(opRepo._queue).toHaveLength(1);
+      await executeOps(opRepo);
 
-      onLineSpy.mockReturnValue(true);
-      expect(opRepo._getNextOps(0)).toEqual([{ operation: mockOperation, bucket: 0, retries: 0 }]);
+      expect(executeFn).toHaveBeenCalledWith([mockOperation]);
+      expect(opRepo._queue).toEqual([]);
+      await vi.waitUntil(() => resolved.mock.calls.length === 1);
       onLineSpy.mockRestore();
     });
 
@@ -1538,6 +1552,31 @@ describe('OperationRepo', () => {
       expect(opRepo._queue).toEqual([]);
       expect(mockOperationModelStore._list()).toEqual([]);
       expect(resolved).toHaveBeenCalled();
+      onLineSpy.mockRestore();
+    });
+
+    test('rejects the waiter after the offline retry limit but keeps the operation queued', async () => {
+      const onLineSpy = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      executeFn.mockRejectedValue(RetryLimitError);
+      const op = new Operation('1');
+      const rejected = vi.fn();
+      opRepo._enqueueAndWait(op).catch(rejected);
+
+      for (let pass = 1; pass < OP_REPO_MAX_OFFLINE_WAIT_RETRIES; pass++) {
+        await executeOps(opRepo);
+      }
+      expect(opRepo._queue[0].resolver).toEqual(expect.any(Function));
+
+      await executeOps(opRepo);
+      expect(opRepo._queue).toEqual([
+        { operation: op, bucket: 0, retries: OP_REPO_MAX_OFFLINE_WAIT_RETRIES },
+      ]);
+      await vi.waitUntil(() => rejected.mock.calls.length === 1);
+
+      executeFn.mockResolvedValue({ _result: ExecutionResult._Success });
+      onLineSpy.mockReturnValue(true);
+      await executeOps(opRepo);
+      expect(opRepo._queue).toEqual([]);
       onLineSpy.mockRestore();
     });
 
