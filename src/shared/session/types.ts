@@ -40,6 +40,13 @@ export interface Session {
    */
   onesignalId?: string;
   subscriptionId?: string;
+  /** The external ID of the user the session started with. Unset for an anonymous user. */
+  externalId?: string;
+  /**
+   * An anonymous session's create is not queued until the first background, a
+   * heartbeat, or the session end. A create also waits while the IDs are local.
+   */
+  isCreateHeld?: boolean;
   /** The duration of the last checkpoint or heartbeat queued for this session. */
   checkpointedDuration?: number;
 }
@@ -55,10 +62,11 @@ interface BaseSessionPayload {
 }
 
 /**
- * Names the user a worker request is for. The worker has no config and no token
- * store, so the page sets jwtRequired when Identity Verification is on and adds
- * externalId and jwt when it has them. Without both, the worker skips only the
- * network request and still updates the local session state.
+ * Names the user a worker request is for. The page adds externalId when the user
+ * has one. The worker has no config and no token store, so the page sets
+ * jwtRequired when Identity Verification is on and adds jwt when it has one.
+ * Without both, the worker skips only the network request and still updates the
+ * local session state.
  */
 export interface SessionUser {
   appId: string;

@@ -877,9 +877,11 @@ describe('ServiceWorker', () => {
   });
 
   describe('message event', () => {
+    // Identified by default, so a new session's create is not held.
     const baseMessagePayload = {
       appId: appId,
       enableSessionDuration: true,
+      externalId: EXTERNAL_ID,
       isSafari: true,
       onesignalId: ONESIGNAL_ID,
       outcomesConfig: {
@@ -1383,6 +1385,7 @@ describe('ServiceWorker', () => {
           usesSessionsApi: true,
           onesignalId: 'local-user',
           subscriptionId: 'local-subscription',
+          externalId: EXTERNAL_ID,
           ...overrides,
         });
 
@@ -2100,7 +2103,11 @@ describe('ServiceWorker', () => {
         test('a blur that brings server ids drains the deferred create before the finalize', async () => {
           await db.put(
             'Sessions',
-            activeSession({ onesignalId: 'local-user', subscriptionId: 'local-subscription' }),
+            activeSession({
+              onesignalId: 'local-user',
+              subscriptionId: 'local-subscription',
+              externalId: EXTERNAL_ID,
+            }),
           );
 
           await deactivate({ sessionOrigin: SessionOrigin._Blur });
@@ -2329,7 +2336,11 @@ describe('ServiceWorker', () => {
             { sessionId: undefined, usesSessionsApi: undefined },
             {},
           ],
-          ['a session that still has local ids', { onesignalId: 'local-user' }, {}],
+          [
+            'a session whose page still has local ids',
+            { onesignalId: 'local-user' },
+            { onesignalId: 'local-user' },
+          ],
           ['a page that sends no subscription type', {}, { subscriptionType: undefined }],
         ])('%s sends no heartbeat', async (_, overrides, payload) => {
           await db.put('Sessions', activeSession(DEFAULT_HEARTBEAT_INTERVAL_SECONDS, overrides));
@@ -2366,6 +2377,160 @@ describe('ServiceWorker', () => {
 
           expect(await queued()).toEqual([expect.objectContaining({ kind: 'update' })]);
           expect(cancel).not.toHaveBeenCalled();
+        });
+      });
+
+      describe('sessions API anonymous hold', () => {
+        const anonymous = { ...baseMessagePayload, isSafari: false, externalId: undefined };
+        const queued = async () =>
+          (await db.getAll('SessionRequests')).sort((a, b) => a.order - b.order);
+        const kinds = async () => (await queued()).map((r) => r.kind);
+        const startAnonymous = async (payload: Partial<UpsertOrDeactivateSessionPayload> = {}) => {
+          await db.put('Options', {
+            key: 'featureFlags',
+            value: JSON.stringify([FeatureFlag._SessionsV2ApiCutover]),
+          });
+          await upsertSession({ ...anonymous, ...payload });
+          return (await getCurrentSession())!;
+        };
+        // Keeps the session open past the threshold.
+        const deactivate = (sessionOrigin: SessionOriginValue, payload = {}) => {
+          vi.mocked(cancelableTimeout).mockReturnValueOnce({
+            promise: new Promise(() => {}),
+            cancel: vi.fn(),
+          });
+          return deactivateSession({ ...anonymous, sessionOrigin, ...payload });
+        };
+        const activeFor = async (seconds: number) => {
+          const current = (await getCurrentSession())!;
+          await db.put('Sessions', {
+            ...current,
+            lastActivatedTimestamp: Date.now() - seconds * 1000,
+          });
+        };
+
+        beforeEach(() => {
+          setUpdateUserResponse();
+          getHandler({ uri: '**/outcomes/measure', method: 'post', status: 200 });
+          vi.mocked(drainSessionRequests).mockClear();
+        });
+
+        afterEach(async () => {
+          await db.delete('Options', 'featureFlags');
+        });
+
+        test('an anonymous session holds its create through upserts and a blur', async () => {
+          const started = await startAnonymous();
+          expect(started).toMatchObject({ usesSessionsApi: true, isCreateHeld: true });
+
+          await upsertSession({ ...anonymous, sessionOrigin: SessionOrigin._Focus });
+          await deactivate(SessionOrigin._Blur);
+
+          expect(await queued()).toEqual([]);
+        });
+
+        test.each([SessionOrigin._VisibilityHidden, SessionOrigin._PageHide])(
+          'the first background (origin %i) sends the create, with its start time, before the checkpoint',
+          async (origin) => {
+            const started = await startAnonymous();
+            await activeFor(10);
+
+            await deactivate(origin);
+
+            expect(await queued()).toEqual([
+              expect.objectContaining({
+                kind: 'create',
+                sessionId: started.sessionId,
+                onesignalId: ONESIGNAL_ID,
+                startTime: started.startTimestamp,
+              }),
+              expect.objectContaining({ kind: 'update', sessionId: started.sessionId }),
+            ]);
+            expect((await getCurrentSession())!.isCreateHeld).toBe(false);
+            expect(drainSessionRequests).toHaveBeenCalled();
+
+            await upsertSession({ ...anonymous, sessionOrigin: SessionOrigin._Focus });
+            await activeFor(10);
+            await deactivate(SessionOrigin._VisibilityHidden);
+            expect(await kinds()).toEqual(['create', 'update']);
+          },
+        );
+
+        test('a due heartbeat sends the create before the heartbeat, and an early tick sends nothing', async () => {
+          await startAnonymous();
+
+          await sendSessionHeartbeat({ ...anonymous, sessionOrigin: SessionOrigin._Heartbeat });
+          expect(await queued()).toEqual([]);
+
+          await activeFor(DEFAULT_HEARTBEAT_INTERVAL_SECONDS);
+          await sendSessionHeartbeat({ ...anonymous, sessionOrigin: SessionOrigin._Heartbeat });
+          expect(await kinds()).toEqual(['create', 'update']);
+          expect(drainSessionRequests).toHaveBeenCalled();
+        });
+
+        test('a held session that expires, as after the browser was killed, sends the create then the end', async () => {
+          const started = await startAnonymous({ sessionThreshold: 30 });
+          await db.put('Sessions', {
+            ...started,
+            status: SessionStatus._Inactive,
+            accumulatedDuration: 20,
+            lastDeactivatedTimestamp: Date.now() - 60_000,
+          });
+
+          await upsertSession({ ...anonymous, sessionThreshold: 30 });
+
+          const records = await queued();
+          expect(records.slice(0, 2)).toEqual([
+            expect.objectContaining({ kind: 'create', sessionId: started.sessionId }),
+            expect.objectContaining({
+              kind: 'update',
+              sessionId: started.sessionId,
+              durationSeconds: 20,
+              endTime: expect.any(Number),
+            }),
+          ]);
+          expect(records[2]).toBeUndefined();
+          expect((await getCurrentSession())!.isCreateHeld).toBe(true);
+        });
+
+        test('the held create carries the notification click that started the session', async () => {
+          await db.put('Outcomes.NotificationClicked', {
+            appId,
+            notificationId,
+            timestamp: Date.now(),
+          });
+          await startAnonymous();
+
+          await deactivate(SessionOrigin._VisibilityHidden);
+
+          expect((await queued())[0]).toMatchObject({
+            kind: 'create',
+            directAttributionId: notificationId,
+          });
+        });
+
+        // Under Identity Verification an anonymous user is never created on the server.
+        test('an anonymous user with a local id reports nothing, even at the end', async () => {
+          const local = { onesignalId: 'local-user', jwtRequired: true };
+          await startAnonymous(local);
+          await activeFor(10);
+
+          await deactivate(SessionOrigin._VisibilityHidden, local);
+          await activeFor(DEFAULT_HEARTBEAT_INTERVAL_SECONDS);
+          await sendSessionHeartbeat({
+            ...anonymous,
+            ...local,
+            sessionOrigin: SessionOrigin._Heartbeat,
+          });
+          const current = (await getCurrentSession())!;
+          await db.put('Sessions', {
+            ...current,
+            status: SessionStatus._Inactive,
+            lastDeactivatedTimestamp: Date.now() - 60_000,
+          });
+          await upsertSession({ ...anonymous, ...local, sessionThreshold: 30 });
+
+          expect(await queued()).toEqual([]);
         });
       });
 
@@ -2503,7 +2668,7 @@ describe('ServiceWorker', () => {
         test('an anonymous user does not leave the session pending', async () => {
           setUpdateUserResponse();
 
-          await upsertWith({ jwtRequired: true });
+          await upsertWith({ jwtRequired: true, externalId: undefined });
 
           expect(updateUserFn).not.toHaveBeenCalled();
           const current = await getCurrentSession();
