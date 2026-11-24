@@ -1,5 +1,6 @@
 import { createSession, type SessionsApiResult, updateSession } from 'src/shared/api/sessions';
 import { db } from 'src/shared/database/client';
+import { delay } from 'src/shared/helpers/general';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
 
@@ -36,19 +37,20 @@ type ReadyRequest =
  * Sends queued session requests oldest first until none are ready. A request
  * stays stored until the server accepts it or rejects it for good, so a worker
  * killed mid-send replays it on the next drain with the same idempotency key.
+ *
+ * A request that is not ready yet waits for the next drain, since the worker
+ * may stop before a timer fires. A caller that queued a create with its first
+ * update, and keeps the worker alive, passes `waitForUpdates` so the update
+ * goes out after the post-create delay instead.
  */
-export function drainSessionRequests(): Promise<void> {
+export function drainSessionRequests(waitForUpdates = false): Promise<void> {
   // A separate lock from the queue's, which a drain takes for each step.
   return navigator.locks
-    .request('onesignal-session-drain', drainOnce)
+    .request('onesignal-session-drain', () => drainOnce(waitForUpdates))
     .catch((e) => Log._debug('Sessions API drain:', e));
 }
 
-/**
- * A request that is not ready yet waits for the next drain: the worker usually
- * stops within seconds of going idle, so a timer would rarely fire.
- */
-async function drainOnce(): Promise<void> {
+async function drainOnce(waitForUpdates: boolean): Promise<void> {
   await withQueueLock(async () => {
     await dropExpiredSessionRequests();
     for (const state of await db.getAll('SessionRequestStates')) {
@@ -60,6 +62,11 @@ async function drainOnce(): Promise<void> {
 
   for (;;) {
     const ready = await withQueueLock(() => pickNext(Date.now()));
+    if (typeof ready === 'number') {
+      if (!waitForUpdates || ready > POST_CREATE_DELAY_MS) return;
+      await delay(ready);
+      continue;
+    }
     if (!ready) return;
 
     const result = await send(ready);
@@ -70,10 +77,12 @@ async function drainOnce(): Promise<void> {
 /**
  * Only the oldest request of each session can be sent, so a session goes
  * create, then updates, then end. A session that is waiting does not hold up
- * the others.
+ * the others. With nothing ready, returns the milliseconds until the first
+ * update is.
  */
-async function pickNext(now: number): Promise<ReadyRequest | undefined> {
+async function pickNext(now: number): Promise<ReadyRequest | number | undefined> {
   const seen = new Set<string>();
+  let nextUpdateInMs: number | undefined;
 
   for (const record of await getQueuedSessionRequests()) {
     if (seen.has(record.sessionId)) continue;
@@ -95,11 +104,13 @@ async function pickNext(now: number): Promise<ReadyRequest | undefined> {
     if (!state) {
       Log._debug('Sessions API: dropping update with no create and no server session id');
       await db.delete('SessionRequests', record.id);
-    } else if (Math.max(record.notBefore, state.createdAt + POST_CREATE_DELAY_MS) <= now) {
-      return { record, state };
+    } else {
+      const readyInMs = Math.max(record.notBefore, state.createdAt + POST_CREATE_DELAY_MS) - now;
+      if (readyInMs <= 0) return { record, state };
+      nextUpdateInMs = Math.min(nextUpdateInMs ?? readyInMs, readyInMs);
     }
   }
-  return undefined;
+  return nextUpdateInMs;
 }
 
 function send({ record, state }: ReadyRequest): Promise<SessionsApiResult<string | void>> {

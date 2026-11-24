@@ -71,9 +71,9 @@ export async function upsertSession(options: UpsertOrDeactivateSessionPayload): 
     return;
   }
 
-  const deferredCreate = await enqueueDeferredCreate(options, existingSession);
+  const createQueued = await releaseHeldCreate(options, existingSession, false);
   await continueOrRestartSession(options, existingSession);
-  if (deferredCreate) await drainSessionRequests();
+  if (createQueued) await drainSessionRequests();
 }
 
 async function continueOrRestartSession(
@@ -116,55 +116,81 @@ async function continueOrRestartSession(
   // TODO: Possibly check that it's not unreasonably long.
   // TODO: Or couple with periodic ping for better results.
   // Drains only once the new session is saved, so a concurrent upsert never
-  // finds the row missing and starts a second session.
+  // finds the row missing and starts a second session. Not awaited: the drain
+  // can wait out the post-create delay, which would hold up the next refresh.
   const endQueued = await finalizeSession(options, existingSession);
   const session = await startNewSession(options, await takeDirectAttributionId(options));
   await db.put('Sessions', session);
   await reportSessionStart(options, session);
-  if (endQueued) await drainSessionRequests();
+  if (endQueued) void drainSessionRequests(true);
 }
 
 type NewSession = Session & Required<Pick<Session, 'sessionId' | 'usesSessionsApi'>>;
 
 async function startNewSession(
-  { appId, onesignalId, subscriptionId, subscriptionType }: SessionUser,
+  { appId, onesignalId, subscriptionId, subscriptionType, externalId }: SessionUser,
   notificationId: string | null,
 ): Promise<NewSession> {
+  // The public create rejects SafariLegacyPush, and an older page sends no
+  // type. Those sessions stay on the legacy path so they are still counted.
+  const usesSessionsApi =
+    !!subscriptionType &&
+    subscriptionType !== SubscriptionType._SafariLegacyPush &&
+    (await isFeatureEnabledInWorker(FeatureFlag._SessionsV2ApiCutover));
   return initializeNewSession({
     appId,
     notificationId,
     sessionId: crypto.randomUUID(),
-    // The public create rejects SafariLegacyPush, and an older page sends no
-    // type. Those sessions stay on the legacy path so they are still counted.
-    usesSessionsApi:
-      !!subscriptionType &&
-      subscriptionType !== SubscriptionType._SafariLegacyPush &&
-      (await isFeatureEnabledInWorker(FeatureFlag._SessionsV2ApiCutover)),
+    usesSessionsApi,
     onesignalId,
     subscriptionId,
+    externalId,
+    isCreateHeld: usesSessionsApi && !externalId,
   }) as NewSession;
 }
 
 async function reportSessionStart(user: SessionUser, session: NewSession): Promise<void> {
-  const queued = session.usesSessionsApi && (await enqueueCreate(user, session.sessionId, session));
-  // A create that failed to queue falls back to legacy reporting. Local ids still get a deferred create.
-  session.usesSessionsApi &&= queued || hasLocalId(user.onesignalId, user.subscriptionId);
+  const held = isCreateHeld(session);
+  const queued =
+    session.usesSessionsApi && !held && (await enqueueCreate(user, session.sessionId, session));
+  // A create that failed to queue falls back to legacy reporting.
+  session.usesSessionsApi &&= queued || held;
   await Promise.all([sendOnSessionCall(user, session), queued && drainSessionRequests()]);
 }
 
-/**
- * A new subscriber's first session starts before the user and subscription
- * exist, so its create waits for an upsert or deactivate that brings the server
- * IDs. The IDs are re-pinned only once the create is queued, so a later message
- * retries it. Without it the session's end is skipped too.
- */
-async function enqueueDeferredCreate(user: SessionUser, session: Session): Promise<boolean> {
-  const { sessionId, usesSessionsApi, onesignalId, subscriptionId } = session;
-  if (!usesSessionsApi || !sessionId || !hasLocalId(onesignalId, subscriptionId)) return false;
-  if (!(await enqueueCreate(user, sessionId, session))) return false;
+/** Queued records are never rewritten, so a create also waits while an ID is local. */
+function isCreateHeld(session: Session): boolean {
+  return !!session.isCreateHeld || hasLocalId(session.onesignalId, session.subscriptionId);
+}
 
-  session.onesignalId = user.onesignalId;
-  session.subscriptionId = user.subscriptionId;
+/**
+ * Queues a held create. An anonymous session holds it until `includeAnonymous`
+ * (the first background, a heartbeat, or the end), so the backend does not set
+ * the owner before a login. A new subscriber's first session starts before the
+ * user and subscription exist, so local pinned IDs take the message's IDs. They
+ * are re-pinned only once the create is queued, so a later message retries it.
+ * Without the create the session's updates and end are skipped too.
+ */
+async function releaseHeldCreate(
+  user: SessionUser,
+  session: Session,
+  includeAnonymous: boolean,
+): Promise<boolean> {
+  const { sessionId, usesSessionsApi } = session;
+  if (!usesSessionsApi || !sessionId || !isCreateHeld(session)) return false;
+  // A row saved before the hold existed has no flag, so it releases as soon as the IDs allow.
+  if (session.isCreateHeld && !session.externalId && !includeAnonymous) return false;
+
+  const { onesignalId, subscriptionId } = hasLocalId(session.onesignalId, session.subscriptionId)
+    ? user
+    : (session as Required<Pick<Session, 'onesignalId' | 'subscriptionId'>>);
+  if (!(await enqueueCreate({ ...user, onesignalId, subscriptionId }, sessionId, session))) {
+    return false;
+  }
+
+  session.onesignalId = onesignalId;
+  session.subscriptionId = subscriptionId;
+  session.isCreateHeld = false;
   await db.put('Sessions', session);
   return true;
 }
@@ -219,15 +245,20 @@ export async function deactivateSession(
   }
   // Drained now: an update waits a few seconds after its create, so a create
   // drained with the end would leave the end for a later drain.
-  const createQueued = await enqueueDeferredCreate(options, existingSession);
+  const createQueued = await releaseHeldCreate(
+    options,
+    existingSession,
+    isBackgroundOrigin(options.sessionOrigin),
+  );
 
   // The finalize step reuses this payload after the threshold, so a token the
   // page refreshes in that window is not used for the session_time request.
   // The caller stores this timer's cancel only once deactivate returns, so an
   // upsert that arrives meanwhile cannot cancel it. The stored row is the truth:
   // a session that resumed and went inactive again has a newer deactivate time.
-  const finalizeSWSession = () =>
-    serializeSessionRefresh(async () => {
+  // The drain runs outside the refresh chain, since it can wait out the post-create delay.
+  const finalizeSWSession = async () => {
+    const endQueued = await serializeSessionRefresh(async () => {
       const current = await getCurrentSession();
       if (
         current?.status !== SessionStatus._Inactive ||
@@ -235,10 +266,12 @@ export async function deactivateSession(
         current.lastDeactivatedTimestamp !== existingSession.lastDeactivatedTimestamp
       ) {
         Log._debug('Finalize skipped, session resumed or replaced');
-        return;
+        return false;
       }
-      if (await finalizeSession(options, current)) await drainSessionRequests();
+      return finalizeSession(options, current);
     });
+    if (endQueued) await drainSessionRequests(true);
+  };
 
   /**
    * For 2 subsequent deactivate requests we need to make sure there is an active finalization timeout.
@@ -248,9 +281,9 @@ export async function deactivateSession(
   if (existingSession.status === SessionStatus._Inactive) {
     // A blur made the session inactive without a checkpoint; the tab hiding later does.
     const checkpointQueued = await enqueueCheckpoint(options, existingSession);
-    if (checkpointQueued && !(await saveCheckpointedDuration(existingSession))) return undefined;
-    if (checkpointQueued || createQueued) void drainSessionRequests();
-    return cancelableTimeout(finalizeSWSession, thresholdInSeconds);
+    const saved = !checkpointQueued || (await saveCheckpointedDuration(existingSession));
+    if (checkpointQueued || createQueued) void drainSessionRequests(true);
+    return saved ? cancelableTimeout(finalizeSWSession, thresholdInSeconds) : undefined;
   }
 
   /**
@@ -259,6 +292,7 @@ export async function deactivateSession(
    */
   if (existingSession.status !== SessionStatus._Active) {
     Log._warn(`Invalid session state: ${String(existingSession.status)}`);
+    if (createQueued) void drainSessionRequests();
     return undefined;
   }
 
@@ -274,8 +308,9 @@ export async function deactivateSession(
 
   const checkpointQueued = await enqueueCheckpoint(options, existingSession);
   await db.put('Sessions', existingSession);
-  // Not awaited, so the caller gets the finalize timer without waiting on the network.
-  if (checkpointQueued || createQueued) void drainSessionRequests();
+  // Not awaited, so the caller gets the finalize timer without waiting on the
+  // network. That timer keeps the worker alive while the drain waits for the update.
+  if (checkpointQueued || createQueued) void drainSessionRequests(true);
 
   // Started once the row is inactive, since finalize skips a row that is not.
   return cancelableTimeout(finalizeSWSession, thresholdInSeconds);
@@ -306,7 +341,9 @@ async function enqueueCheckpoint(
 export async function sendSessionHeartbeat(
   options: UpsertOrDeactivateSessionPayload,
 ): Promise<void> {
-  if (await serializeSessionRefresh(() => enqueueHeartbeat(options))) await drainSessionRequests();
+  if (await serializeSessionRefresh(() => enqueueHeartbeat(options))) {
+    await drainSessionRequests(true);
+  }
 }
 
 async function enqueueHeartbeat(options: UpsertOrDeactivateSessionPayload): Promise<boolean> {
@@ -322,10 +359,13 @@ async function enqueueHeartbeat(options: UpsertOrDeactivateSessionPayload): Prom
   const slack = Math.min(HEARTBEAT_SLACK_SECONDS, interval / 10);
   const due = (session.checkpointedDuration ?? 0) + interval - slack;
   if (duration < due) return false;
+  const createQueued = await releaseHeldCreate(options, session, true);
   if (!(await enqueueDurationUpdate(options, { ...session, accumulatedDuration: duration }))) {
-    return false;
+    return createQueued;
   }
-  return saveCheckpointedDuration({ ...session, checkpointedDuration: duration });
+  return (
+    (await saveCheckpointedDuration({ ...session, checkpointedDuration: duration })) || createQueued
+  );
 }
 
 // A finalize can delete the row during the enqueue. Writing the row read
@@ -383,9 +423,15 @@ async function finalizeSession(
   Log._debug('Finalize session', `duration: ${session.accumulatedDuration}s`);
   // Ends at the moment the last tab went hidden, not when the threshold expired.
   const endedAt = session.lastDeactivatedTimestamp ?? Date.now();
-  const endQueued = await enqueueDurationUpdate(options, session, endedAt);
-  // The backend derives session_time and the duration outcome from a Sessions API session.
-  if (sendOnFocusEnabled && !session.usesSessionsApi) {
+  const createQueued = await releaseHeldCreate(options, session, true);
+  const endQueued = (await enqueueDurationUpdate(options, session, endedAt)) || createQueued;
+  // The backend derives session_time and the duration outcome from a Sessions API
+  // session. One whose create never queued is unknown to it, so the legacy
+  // request reports it, unless the page's IDs are still local too.
+  const reportedToApi =
+    session.usesSessionsApi &&
+    (!isCreateHeld(session) || hasLocalId(options.onesignalId, options.subscriptionId));
+  if (sendOnFocusEnabled && !reportedToApi) {
     Log._debug(`on_focus duration: ${session.accumulatedDuration}s`);
     const attribution = await getConfigAttribution(outcomesConfig);
     Log._debug('on_focus attribution', attribution);
@@ -403,8 +449,8 @@ async function finalizeSession(
 
 /**
  * The session's create was queued with the pinned IDs, so its updates use them
- * too. Skipped when the create could not have been queued: IDs still local, or
- * a page that sends no subscription type.
+ * too. Skipped when the create was not queued: still held, or a page that sends
+ * no subscription type.
  */
 async function enqueueDurationUpdate(
   { subscriptionType }: UpsertOrDeactivateSessionPayload,
@@ -413,12 +459,7 @@ async function enqueueDurationUpdate(
 ): Promise<boolean> {
   const { appId, sessionId, usesSessionsApi, onesignalId, subscriptionId } = session;
   if (!usesSessionsApi || !sessionId) return false;
-  if (
-    !subscriptionType ||
-    !onesignalId ||
-    !subscriptionId ||
-    hasLocalId(onesignalId, subscriptionId)
-  ) {
+  if (!subscriptionType || !onesignalId || !subscriptionId || isCreateHeld(session)) {
     Log._debug('Sessions API: update skipped, no create was queued');
     return false;
   }

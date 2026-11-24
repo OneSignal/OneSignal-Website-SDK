@@ -26,7 +26,13 @@ type NewSessionOptions = Pick<Session, 'appId'> &
   Partial<
     Pick<
       Session,
-      'notificationId' | 'sessionId' | 'usesSessionsApi' | 'onesignalId' | 'subscriptionId'
+      | 'notificationId'
+      | 'sessionId'
+      | 'usesSessionsApi'
+      | 'onesignalId'
+      | 'subscriptionId'
+      | 'externalId'
+      | 'isCreateHeld'
     >
   >;
 

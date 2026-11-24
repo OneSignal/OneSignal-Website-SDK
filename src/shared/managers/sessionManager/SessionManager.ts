@@ -38,14 +38,15 @@ export class SessionManager implements ISessionManager {
   }
 
   /**
-   * The ids the worker needs to sign a session request. The message always goes
-   * out so the worker session state stays correct; the worker skips the network
-   * request when jwtRequired is set and a token is missing.
+   * The worker holds an anonymous session's create, so it needs the external ID
+   * without Identity Verification too. Under it, the message always goes out so
+   * the worker session state stays correct; the worker skips the network request
+   * when a token is missing.
    */
-  private _ivSessionCredentials(): Pick<SessionUser, 'jwtRequired' | 'externalId' | 'jwt'> {
-    if (!isIvBehaviorActive()) return {};
-
+  private _userCredentials(): Pick<SessionUser, 'jwtRequired' | 'externalId' | 'jwt'> {
     const externalId = OneSignal._coreDirector._getIdentityModel()._externalId;
+    if (!isIvBehaviorActive()) return { externalId };
+
     const jwt = externalId ? OneSignal._coreDirector._jwtTokenStore._getJwt(externalId) : undefined;
     return { jwtRequired: true, externalId, jwt };
   }
@@ -63,7 +64,7 @@ export class SessionManager implements ISessionManager {
       isSafari: hasSafariWindow(),
       outcomesConfig: this._context._appConfig.userConfig.outcomes!,
       heartbeatInterval: this._context._appConfig.heartbeatInterval,
-      ...this._ivSessionCredentials(),
+      ...this._userCredentials(),
     };
   }
 

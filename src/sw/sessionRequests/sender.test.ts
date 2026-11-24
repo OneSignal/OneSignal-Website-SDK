@@ -1,6 +1,7 @@
 import { APP_ID, ONESIGNAL_ID, SUB_ID } from '__test__/constants';
 import { createSession, updateSession } from 'src/shared/api/sessions';
 import { db } from 'src/shared/database/client';
+import { delay } from 'src/shared/helpers/general';
 import { SubscriptionType } from 'src/shared/subscriptions/constants';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 
@@ -22,6 +23,10 @@ import {
 
 vi.mock('src/shared/libraries/Log');
 vi.mock('src/shared/api/sessions');
+vi.mock('src/shared/helpers/general', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('src/shared/helpers/general')>()),
+  delay: vi.fn(),
+}));
 
 const SERVER_SESSION_ID = 'server-session-1';
 const NOW = 1_700_000_000_000;
@@ -89,6 +94,48 @@ test('sends the create, then its updates after the post-create delay', async () 
     endTime: undefined,
   });
   expect(await queuedKinds()).toEqual([]);
+});
+
+describe('waiting for updates', () => {
+  beforeEach(() => {
+    vi.mocked(delay).mockImplementation((ms) => {
+      advance(ms);
+      return Promise.resolve();
+    });
+  });
+
+  test('sends an update queued with its create once the post-create delay passes', async () => {
+    await create();
+    await update(10);
+
+    await drainSessionRequests(true);
+
+    expect(delay).toHaveBeenCalledExactlyOnceWith(POST_CREATE_DELAY_MS);
+    expect(createSession).toHaveBeenCalledTimes(1);
+    expect(updateSession).toHaveBeenCalledTimes(1);
+    expect(await queuedKinds()).toEqual([]);
+  });
+
+  test('leaves an update with a longer backoff for the next drain', async () => {
+    vi.mocked(updateSession).mockResolvedValueOnce({ kind: 'retry', status: 429 });
+    await create();
+    await update(10);
+
+    await drainSessionRequests(true);
+
+    expect(updateSession).toHaveBeenCalledTimes(1);
+    expect(await getQueuedSessionRequests()).toMatchObject([{ kind: 'update', attempts: 1 }]);
+  });
+
+  test('a drain that does not wait leaves the update for the next drain', async () => {
+    await create();
+    await update(10);
+
+    await drainSessionRequests();
+
+    expect(delay).not.toHaveBeenCalled();
+    expect(updateSession).not.toHaveBeenCalled();
+  });
 });
 
 test('drops a create with a local id and its updates, and sends other sessions', async () => {

@@ -466,7 +466,7 @@ describe('SessionManager', () => {
 
     const lastPayload = () => unicastSpy.mock.calls.at(-1)![1];
 
-    test('IV inactive: the payload carries no externalId or jwt, even with a stored token', async () => {
+    test('IV inactive: the payload carries the externalId but no jwt, even with a stored token', async () => {
       OneSignal._coreDirector._jwtTokenStore._putJwt(EXTERNAL_ID, JWT);
 
       await sm._notifySWToUpsertSession(
@@ -475,7 +475,7 @@ describe('SessionManager', () => {
       );
 
       expect(lastPayload()).not.toHaveProperty('jwtRequired');
-      expect(lastPayload()).not.toHaveProperty('externalId');
+      expect(lastPayload()).toHaveProperty('externalId', EXTERNAL_ID);
       expect(lastPayload()).not.toHaveProperty('jwt');
     });
 
