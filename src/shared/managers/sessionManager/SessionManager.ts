@@ -232,6 +232,34 @@ export class SessionManager implements ISessionManager {
     }
   }
 
+  /**
+   * Tells the worker the user switched, so it moves or splits the session at
+   * this moment. Sent first with the new user's IDs as they are, which can be
+   * local, and again once the switch finishes, so a held create can go out with
+   * the server IDs. Other session messages wait for the switch, so they
+   * usually follow it; the worker covers one that does not.
+   */
+  async _handleUserSwitch(): Promise<void> {
+    if (!supportsServiceWorkers()) return;
+    // A visitor who never subscribed has no worker, and the send would log an error.
+    if (!(await this._context._serviceWorkerManager._getOneSignalRegistration())) return;
+    await this._notifySWOfUserSwitch();
+    await LoginManager._switchingUsersPromise;
+    await this._notifySWOfUserSwitch();
+  }
+
+  private async _notifySWOfUserSwitch(): Promise<void> {
+    try {
+      const ids = await this._getOneSignalAndSubscriptionIds();
+      this._context._workerMessenger._unicast(
+        WorkerMessengerCommand._SessionUserSwitch,
+        this._sessionPayload(ids, SessionOrigin._UserSwitch),
+      );
+    } catch (e) {
+      Log._debug('User switch: no session update', e);
+    }
+  }
+
   async _upsertSession(sessionOrigin: SessionOriginValue): Promise<void> {
     await LoginManager._switchingUsersPromise;
     this._sessionStarted = true;

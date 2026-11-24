@@ -80,6 +80,7 @@ export default class LoginManager {
 
     const done = loginDone ? pushDone.then(() => loginDone) : pushDone;
     LoginManager._switchingUsersPromise = done.catch(() => undefined);
+    void OneSignal._context?._sessionManager?._handleUserSwitch();
     return done;
   }
 

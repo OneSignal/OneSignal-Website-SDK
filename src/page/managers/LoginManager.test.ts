@@ -56,6 +56,22 @@ describe('LoginManager', () => {
     expect(enqueueAndWaitSpy).toHaveBeenCalled();
   });
 
+  test('login and logout tell the session manager about the switch', async () => {
+    const switchSpy = vi
+      .spyOn(OneSignal._context._sessionManager, '_handleUserSwitch')
+      .mockResolvedValue(undefined);
+    vi.spyOn(OneSignal._coreDirector._operationRepo, '_enqueueAndWait').mockResolvedValue(
+      undefined,
+    );
+
+    await LoginManager.login('user-a');
+    await LoginManager.login('user-a');
+    expect(switchSpy).toHaveBeenCalledOnce();
+
+    await LoginManager.logout();
+    expect(switchSpy).toHaveBeenCalledTimes(2);
+  });
+
   describe('login: same externalId', () => {
     const debugSpy = vi.spyOn(Log, '_debug').mockImplementation(() => undefined);
 

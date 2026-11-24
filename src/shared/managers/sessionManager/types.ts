@@ -6,4 +6,5 @@ export interface ISessionManager {
   _upsertSession: (sessionOrigin: SessionOriginValue) => Promise<void>;
   _sendOnSessionUpdateFromPage: () => Promise<void>;
   _handleJwtUpdated: (externalId: string) => Promise<void>;
+  _handleUserSwitch: () => Promise<void>;
 }

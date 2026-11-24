@@ -448,6 +448,67 @@ describe('SessionManager', () => {
     });
   });
 
+  describe('_handleUserSwitch', () => {
+    let sm: SessionManager;
+    let unicastSpy: MockInstance;
+    let registrationSpy: MockInstance;
+    const switchMessages = () =>
+      unicastSpy.mock.calls.filter(
+        ([command]) => command === WorkerMessengerCommand._SessionUserSwitch,
+      );
+
+    beforeEach(async () => {
+      TestEnvironment.initialize();
+      supportsServiceWorkersSpy.mockReturnValue(true);
+      await setupSubModelStore({ id: SUB_ID });
+      sm = new SessionManager(OneSignal._context);
+      unicastSpy = vi
+        .spyOn(OneSignal._context._workerMessenger, '_unicast')
+        .mockResolvedValue(undefined);
+      registrationSpy = vi
+        .spyOn(OneSignal._context._serviceWorkerManager, '_getOneSignalRegistration')
+        .mockResolvedValue({} as ServiceWorkerRegistration);
+    });
+
+    test('tells the worker at once, then again with the server ids once the switch finishes', async () => {
+      let finishSwitch!: () => void;
+      LoginManager._switchingUsersPromise = new Promise((resolve) => (finishSwitch = resolve));
+      updateIdentityModel('onesignal_id', 'local-user');
+      updateIdentityModel('external_id', EXTERNAL_ID);
+
+      const handled = sm._handleUserSwitch();
+      await vi.waitFor(() => expect(switchMessages()).toHaveLength(1));
+      expect(switchMessages()[0][1]).toMatchObject({
+        sessionOrigin: SessionOrigin._UserSwitch,
+        onesignalId: 'local-user',
+        externalId: EXTERNAL_ID,
+        subscriptionId: SUB_ID,
+      });
+
+      updateIdentityModel('onesignal_id', ONESIGNAL_ID);
+      finishSwitch();
+      await handled;
+      expect(switchMessages()).toHaveLength(2);
+      expect(switchMessages()[1][1]).toMatchObject({ onesignalId: ONESIGNAL_ID });
+    });
+
+    test('sends nothing without service worker support', async () => {
+      supportsServiceWorkersSpy.mockReturnValue(false);
+
+      await sm._handleUserSwitch();
+
+      expect(switchMessages()).toHaveLength(0);
+    });
+
+    test('sends nothing when no OneSignal worker is registered', async () => {
+      registrationSpy.mockResolvedValue(undefined);
+
+      await sm._handleUserSwitch();
+
+      expect(switchMessages()).toHaveLength(0);
+    });
+  });
+
   describe('worker session payload under Identity Verification', () => {
     const JWT = 'header.payload.signature';
     let sm: SessionManager;
