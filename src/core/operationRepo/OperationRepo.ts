@@ -26,6 +26,7 @@ import { GroupComparisonType, type Operation } from '../operations/Operation';
 import {
   OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF,
   OP_REPO_EXECUTION_INTERVAL,
+  OP_REPO_MAX_FAIL_RETRY_BACKOFF,
   OP_REPO_POST_CREATE_DELAY,
 } from './constants';
 import { type NewRecordsState } from './NewRecordsState';
@@ -562,7 +563,10 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   ): Promise<void> {
     Log._debug(`retryAfterSeconds: ${retryAfterSeconds}`);
     const retryAfterSecondsMs = (retryAfterSeconds || 0) * 1000;
-    const delayForOnRetries = retries * OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF;
+    const delayForOnRetries = Math.min(
+      retries * OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF,
+      OP_REPO_MAX_FAIL_RETRY_BACKOFF,
+    );
     const delayFor = Math.max(delayForOnRetries, retryAfterSecondsMs);
 
     if (delayFor < 1) return;

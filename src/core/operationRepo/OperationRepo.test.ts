@@ -26,7 +26,11 @@ import { SetPropertyOperation } from '../operations/SetPropertyOperation';
 import { TransferSubscriptionOperation } from '../operations/TransferSubscriptionOperation';
 import { UpdateSubscriptionOperation } from '../operations/UpdateSubscriptionOperation';
 import { ExecutionResult, type IOperationExecutor } from '../types/operation';
-import { OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF, OP_REPO_POST_CREATE_DELAY } from './constants';
+import {
+  OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF,
+  OP_REPO_MAX_FAIL_RETRY_BACKOFF,
+  OP_REPO_POST_CREATE_DELAY,
+} from './constants';
 import { NewRecordsState } from './NewRecordsState';
 import { OperationRepo, type OperationQueueItem } from './OperationRepo';
 
@@ -1310,6 +1314,14 @@ describe('OperationRepo', () => {
 
       // should delay for retryAfterSeconds (30s = 30000ms)
       expect(delaySpy).toHaveBeenCalledWith(30000);
+    });
+
+    test('caps the retry delay but not the Retry-After delay', async () => {
+      await opRepo._delayBeforeNextExecution(120);
+      expect(delaySpy).toHaveBeenLastCalledWith(OP_REPO_MAX_FAIL_RETRY_BACKOFF);
+
+      await opRepo._delayBeforeNextExecution(120, 60);
+      expect(delaySpy).toHaveBeenLastCalledWith(60_000);
     });
 
     test('can handle fail pause op repo operation', async () => {
