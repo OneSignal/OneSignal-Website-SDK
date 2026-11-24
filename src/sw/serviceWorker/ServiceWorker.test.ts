@@ -2458,7 +2458,7 @@ describe('ServiceWorker', () => {
               expect.objectContaining({ kind: 'update', sessionId: started.sessionId }),
             ]);
             expect((await getCurrentSession())!.isCreateHeld).toBe(false);
-            expect(drainSessionRequests).toHaveBeenCalled();
+            expect(drainSessionRequests).toHaveBeenCalledWith(true);
 
             await upsertSession({ ...anonymous, sessionOrigin: SessionOrigin._Focus });
             await activeFor(10);
@@ -2476,7 +2476,7 @@ describe('ServiceWorker', () => {
           await activeFor(DEFAULT_HEARTBEAT_INTERVAL_SECONDS);
           await sendSessionHeartbeat({ ...anonymous, sessionOrigin: SessionOrigin._Heartbeat });
           expect(await kinds()).toEqual(['create', 'update']);
-          expect(drainSessionRequests).toHaveBeenCalled();
+          expect(drainSessionRequests).toHaveBeenCalledWith(true);
         });
 
         test('a held session that expires, as after the browser was killed, sends the create then the end', async () => {
@@ -2502,6 +2502,49 @@ describe('ServiceWorker', () => {
           ]);
           expect(records[2]).toBeUndefined();
           expect((await getCurrentSession())!.isCreateHeld).toBe(true);
+          expect(drainSessionRequests).toHaveBeenCalledWith(true);
+        });
+
+        test('a session that only lost focus sends the create and the end at the finalize', async () => {
+          const started = await startAnonymous();
+
+          const finalize = await deactivateSession({
+            ...anonymous,
+            sessionOrigin: SessionOrigin._Blur,
+          });
+          await finalize!.promise;
+
+          expect(await queued()).toEqual([
+            expect.objectContaining({ kind: 'create', sessionId: started.sessionId }),
+            expect.objectContaining({
+              kind: 'update',
+              sessionId: started.sessionId,
+              endTime: expect.any(Number),
+            }),
+          ]);
+          expect(drainSessionRequests).toHaveBeenCalledExactlyOnceWith(true);
+        });
+
+        test('a create that fails to queue at the end sends the legacy duration', async () => {
+          vi.spyOn(Log, '_error').mockImplementation(() => {});
+          await startAnonymous();
+          await activeFor(10);
+          updateUserFn.mockClear();
+          vi.spyOn(navigator.locks, 'request').mockImplementationOnce(() => {
+            throw new TypeError('locks unavailable');
+          });
+
+          const finalize = await deactivateSession({
+            ...anonymous,
+            sessionOrigin: SessionOrigin._Blur,
+          });
+          await finalize!.promise;
+
+          expect(await queued()).toEqual([]);
+          expect(updateUserFn).toHaveBeenCalledWith(
+            expect.objectContaining({ deltas: { session_time: 10 } }),
+          );
+          expect(await getCurrentSession()).toBeNull();
         });
 
         test('a create released by a deactivate that stops early is still drained', async () => {

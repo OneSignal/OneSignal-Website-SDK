@@ -116,12 +116,13 @@ async function continueOrRestartSession(
   // TODO: Possibly check that it's not unreasonably long.
   // TODO: Or couple with periodic ping for better results.
   // Drains only once the new session is saved, so a concurrent upsert never
-  // finds the row missing and starts a second session.
+  // finds the row missing and starts a second session. Not awaited: the drain
+  // can wait out the post-create delay, which would hold up the next refresh.
   const endQueued = await finalizeSession(options, existingSession);
   const session = await startNewSession(options, await takeDirectAttributionId(options));
   await db.put('Sessions', session);
   await reportSessionStart(options, session);
-  if (endQueued) await drainSessionRequests();
+  if (endQueued) void drainSessionRequests(true);
 }
 
 type NewSession = Session & Required<Pick<Session, 'sessionId' | 'usesSessionsApi'>>;
@@ -255,8 +256,9 @@ export async function deactivateSession(
   // The caller stores this timer's cancel only once deactivate returns, so an
   // upsert that arrives meanwhile cannot cancel it. The stored row is the truth:
   // a session that resumed and went inactive again has a newer deactivate time.
-  const finalizeSWSession = () =>
-    serializeSessionRefresh(async () => {
+  // The drain runs outside the refresh chain, since it can wait out the post-create delay.
+  const finalizeSWSession = async () => {
+    const endQueued = await serializeSessionRefresh(async () => {
       const current = await getCurrentSession();
       if (
         current?.status !== SessionStatus._Inactive ||
@@ -264,10 +266,12 @@ export async function deactivateSession(
         current.lastDeactivatedTimestamp !== existingSession.lastDeactivatedTimestamp
       ) {
         Log._debug('Finalize skipped, session resumed or replaced');
-        return;
+        return false;
       }
-      if (await finalizeSession(options, current)) await drainSessionRequests();
+      return finalizeSession(options, current);
     });
+    if (endQueued) await drainSessionRequests(true);
+  };
 
   /**
    * For 2 subsequent deactivate requests we need to make sure there is an active finalization timeout.
@@ -278,7 +282,7 @@ export async function deactivateSession(
     // A blur made the session inactive without a checkpoint; the tab hiding later does.
     const checkpointQueued = await enqueueCheckpoint(options, existingSession);
     const saved = !checkpointQueued || (await saveCheckpointedDuration(existingSession));
-    if (checkpointQueued || createQueued) void drainSessionRequests();
+    if (checkpointQueued || createQueued) void drainSessionRequests(true);
     return saved ? cancelableTimeout(finalizeSWSession, thresholdInSeconds) : undefined;
   }
 
@@ -304,8 +308,9 @@ export async function deactivateSession(
 
   const checkpointQueued = await enqueueCheckpoint(options, existingSession);
   await db.put('Sessions', existingSession);
-  // Not awaited, so the caller gets the finalize timer without waiting on the network.
-  if (checkpointQueued || createQueued) void drainSessionRequests();
+  // Not awaited, so the caller gets the finalize timer without waiting on the
+  // network. That timer keeps the worker alive while the drain waits for the update.
+  if (checkpointQueued || createQueued) void drainSessionRequests(true);
 
   // Started once the row is inactive, since finalize skips a row that is not.
   return cancelableTimeout(finalizeSWSession, thresholdInSeconds);
@@ -336,7 +341,9 @@ async function enqueueCheckpoint(
 export async function sendSessionHeartbeat(
   options: UpsertOrDeactivateSessionPayload,
 ): Promise<void> {
-  if (await serializeSessionRefresh(() => enqueueHeartbeat(options))) await drainSessionRequests();
+  if (await serializeSessionRefresh(() => enqueueHeartbeat(options))) {
+    await drainSessionRequests(true);
+  }
 }
 
 async function enqueueHeartbeat(options: UpsertOrDeactivateSessionPayload): Promise<boolean> {
@@ -418,8 +425,13 @@ async function finalizeSession(
   const endedAt = session.lastDeactivatedTimestamp ?? Date.now();
   const createQueued = await releaseHeldCreate(options, session, true);
   const endQueued = (await enqueueDurationUpdate(options, session, endedAt)) || createQueued;
-  // The backend derives session_time and the duration outcome from a Sessions API session.
-  if (sendOnFocusEnabled && !session.usesSessionsApi) {
+  // The backend derives session_time and the duration outcome from a Sessions API
+  // session. One whose create never queued is unknown to it, so the legacy
+  // request reports it, unless the page's IDs are still local too.
+  const reportedToApi =
+    session.usesSessionsApi &&
+    (!isCreateHeld(session) || hasLocalId(options.onesignalId, options.subscriptionId));
+  if (sendOnFocusEnabled && !reportedToApi) {
     Log._debug(`on_focus duration: ${session.accumulatedDuration}s`);
     const attribution = await getConfigAttribution(outcomesConfig);
     Log._debug('on_focus attribution', attribution);
