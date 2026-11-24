@@ -102,6 +102,8 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
       enabled,
       token,
       notification_types,
+      web_auth: lastUpdateOperation?.web_auth ?? createOperation.web_auth,
+      web_p256: lastUpdateOperation?.web_p256 ?? createOperation.web_p256,
     };
 
     const { alias, jwt } = resolveBackendParams(createOperation, this._jwtTokenStore);

@@ -110,11 +110,12 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     ]);
     // The page fetches the config before the repo starts, so the requirement is
     // already hydrated here. This is the web equivalent of Android's hydrate hook.
+    let removedWithNoJwt: Operation[] = [];
     if (isIvBehaviorActive()) {
       this._purgeAnonymousOperations();
-      this._removeOpsWithNoJwt();
+      removedWithNoJwt = this._removeOpsWithNoJwt();
     }
-    this._removeUntranslatableOps(true);
+    this._removeUntranslatableOps(true, removedWithNoJwt);
     this._processQueueForever();
   }
 
@@ -159,17 +160,17 @@ export class OperationRepo implements IOperationRepo, IStartableService {
     );
   }
 
-  /** Removes every queued operation that matches, and rejects its waiter. Returns the count. */
-  public _removeQueued(matches: (operation: Operation) => boolean): number {
+  /** Removes every queued operation that matches, and rejects its waiter. Returns the removed operations. */
+  public _removeQueued(matches: (operation: Operation) => boolean): Operation[] {
     const removed = this._queue.filter((item) => matches(item.operation));
-    if (!removed.length) return 0;
+    if (!removed.length) return [];
     this._queue = this._queue.filter((item) => !removed.includes(item));
     removed.forEach((item) => {
       this._operationModelStore._remove(item.operation._modelId);
       item.resolver?.(false, ExecutionResult._FailNoretry);
     });
     Log._debug(`OpRepo: removed ${removed.length} queued ops`);
-    return removed.length;
+    return removed.map((item) => item.operation);
   }
 
   /**
@@ -258,9 +259,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
    * token for that user comes. The current user keeps its operations, because
    * the app gives its token with login or updateUserJwt.
    */
-  private _removeOpsWithNoJwt(): void {
+  private _removeOpsWithNoJwt(): Operation[] {
     const currentExternalId = this._identityModelStore._model._externalId;
-    this._removeQueued((op) => {
+    return this._removeQueued((op) => {
       const externalId = op._externalId;
       return (
         !!externalId &&
@@ -282,10 +283,10 @@ export class OperationRepo implements IOperationRepo, IStartableService {
    * because that login sends them. At start, a current user with an externalId gets a new login, because
    * login with the same externalId does nothing. The login is enqueued before the
    * removal, so the subscription operations that it sends stay.
-   * A removed create-subscription goes to the current user again, see
-   * _recreateSubscriptions.
+   * The subscription of a removed or dropped create-subscription or transfer goes
+   * to the current user again, see _recreateSubscriptions.
    */
-  private _removeUntranslatableOps(atStart: boolean): void {
+  private _removeUntranslatableOps(atStart: boolean, dropped: Operation[] = []): void {
     const { _onesignalId: currentId, _externalId: externalId } = this._identityModelStore._model;
     const findCreated = () =>
       new Set<string | undefined>(
@@ -311,39 +312,57 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       );
     }
 
-    const removedCreates: CreateSubscriptionOperation[] = [];
+    const removed = [...dropped];
+    let removedNow: Operation[];
     do {
       created = findCreated();
-    } while (
-      this._removeQueued((op) => {
+      removedNow = this._removeQueued((op) => {
         if (op instanceof LoginUserOperation) {
           if (isLost(op._existingOnesignalId)) op._clearExistingOnesignalId();
           return false;
         }
-        const isRemoved =
-          (op._onesignalId !== currentId && isLost(op._onesignalId)) ||
-          (op instanceof BaseSubscriptionOperation &&
-            !(op instanceof CreateSubscriptionOperation) &&
-            !created.has(op._onesignalId) &&
-            !(op._onesignalId === currentId && IDManager._isLocalId(currentId)) &&
-            isLost(op._subscriptionId));
-        if (isRemoved && op instanceof CreateSubscriptionOperation) removedCreates.push(op);
-        return isRemoved;
-      })
-    );
-    this._recreateSubscriptions(removedCreates);
+        const isUserLost = op._onesignalId !== currentId && isLost(op._onesignalId);
+        if (op instanceof CreateSubscriptionOperation) return isUserLost;
+
+        const waitsForCurrentLogin =
+          op._onesignalId === currentId && IDManager._isLocalId(currentId);
+        const isSubscriptionLost =
+          op instanceof BaseSubscriptionOperation &&
+          !created.has(op._onesignalId) &&
+          !waitsForCurrentLogin &&
+          isLost(op._subscriptionId);
+        return isUserLost || isSubscriptionLost;
+      });
+      removed.push(...removedNow);
+    } while (removedNow.length);
+    this._recreateSubscriptions(removed);
   }
 
   /**
    * Subscription models stay after a user switch, so the model of a removed
    * create keeps its local id. A later addEmail or addSms with the same token
    * does nothing, so no other code creates the subscription. Enqueues a create
-   * for the current user from the model. Skips a subscription that a queued
-   * create or transfer still sends, and a model that is gone.
+   * for the current user from the model, in place of a removed create of
+   * another user or a removed transfer of a local subscription. A create of
+   * the current user, and a transfer of a current user with a local id, go
+   * only after a request for that user fails, so they are not enqueued again.
+   * Skips a subscription that a queued create or transfer still sends, and a
+   * model that is gone. A local current id gets a login, because the create
+   * cannot start without one.
    */
-  private _recreateSubscriptions(removedCreates: CreateSubscriptionOperation[]): void {
+  private _recreateSubscriptions(removed: Operation[]): void {
     const { _onesignalId: onesignalId, _externalId: externalId } = this._identityModelStore._model;
-    removedCreates.forEach(({ _appId: appId, _subscriptionId: subscriptionId }) => {
+    let appIdForLogin: string | undefined;
+    removed.forEach((removedOp) => {
+      const isCurrentUser = removedOp._onesignalId === onesignalId;
+      const isOtherUserCreate = removedOp instanceof CreateSubscriptionOperation && !isCurrentUser;
+      const isLocalTransfer =
+        removedOp instanceof TransferSubscriptionOperation &&
+        IDManager._isLocalId(removedOp._subscriptionId) &&
+        !(isCurrentUser && IDManager._isLocalId(onesignalId));
+      if (!isOtherUserCreate && !isLocalTransfer) return;
+
+      const { _appId: appId, _subscriptionId: subscriptionId } = removedOp;
       const model = this._subscriptionModelStore._getBySubscriptionId(subscriptionId);
       const isSent = this._queue.some(
         ({ operation: op }) =>
@@ -351,20 +370,30 @@ export class OperationRepo implements IOperationRepo, IStartableService {
             op instanceof TransferSubscriptionOperation) &&
           op._subscriptionId === subscriptionId,
       );
-      if (model && !isSent) {
-        this._enqueue(
-          new CreateSubscriptionOperation({
-            appId,
-            onesignalId,
-            externalId,
-            subscriptionId,
-            type: model.type,
-            token: model.token,
-            ...SubscriptionModelStoreListener._getSubscriptionEnabledAndStatus(model),
-          }),
-        );
-      }
+      if (!model || isSent) return;
+
+      this._enqueue(
+        new CreateSubscriptionOperation({
+          appId,
+          onesignalId,
+          externalId,
+          subscriptionId,
+          type: model.type,
+          token: model.token,
+          web_auth: model.web_auth,
+          web_p256: model.web_p256,
+          ...SubscriptionModelStoreListener._getSubscriptionEnabledAndStatus(model),
+        }),
+      );
+      appIdForLogin = appId;
     });
+
+    const hasLogin = this._queue.some(
+      ({ operation: op }) => op instanceof LoginUserOperation && op._onesignalId === onesignalId,
+    );
+    if (appIdForLogin && IDManager._isLocalId(onesignalId) && !hasLogin) {
+      this._enqueue(new LoginUserOperation({ appId: appIdForLogin, onesignalId, externalId }));
+    }
   }
 
   private _internalEnqueue(
@@ -553,16 +582,20 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       ops.forEach((op) => {
         this._operationModelStore._remove(op.operation._modelId);
       });
-      this._removeUntranslatableOps(false);
+      this._removeUntranslatableOps(
+        false,
+        ops.map((op) => op.operation),
+      );
     }
   }
 
   /** The server rejected the user, so a new login at start would fail the same way. */
-  private _removeOpsOfRejectedLogins(operations: Operation[]): void {
-    operations.forEach((op) => {
-      if (op instanceof LoginUserOperation && IDManager._isLocalId(op._onesignalId))
-        this._removeQueued((queued) => queued._onesignalId === op._onesignalId);
-    });
+  private _removeOpsOfRejectedLogins(operations: Operation[]): Operation[] {
+    return operations.flatMap((op) =>
+      op instanceof LoginUserOperation && IDManager._isLocalId(op._onesignalId)
+        ? this._removeQueued((queued) => queued._onesignalId === op._onesignalId)
+        : [],
+    );
   }
 
   private _dropAndWake(
@@ -575,8 +608,8 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       this._operationModelStore._remove(op.operation._modelId);
     });
     ops.forEach((op) => op.resolver?.(false, result));
-    this._removeOpsOfRejectedLogins(operations);
-    this._removeUntranslatableOps(false);
+    const removed = this._removeOpsOfRejectedLogins(operations);
+    this._removeUntranslatableOps(false, [...operations, ...removed]);
   }
 
   /**
