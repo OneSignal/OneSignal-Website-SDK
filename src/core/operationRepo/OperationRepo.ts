@@ -26,6 +26,8 @@ import { GroupComparisonType, type Operation } from '../operations/Operation';
 import {
   OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF,
   OP_REPO_EXECUTION_INTERVAL,
+  OP_REPO_MAX_FAIL_RETRY_BACKOFF,
+  OP_REPO_MAX_OFFLINE_WAIT_RETRIES,
   OP_REPO_POST_CREATE_DELAY,
 } from './constants';
 import { type NewRecordsState } from './NewRecordsState';
@@ -471,9 +473,15 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       }
     } catch (e) {
       // No response from the server while offline, so keep the operations and send them later.
+      // navigator.onLine can be false while the network works and a CSP or firewall blocks
+      // the request, so reject a waiter after some passes. Its operation stays queued.
       if (e === RetryLimitError && !navigator.onLine) {
         [...ops].reverse().forEach((op) => {
           op.retries++;
+          if (op.retries >= OP_REPO_MAX_OFFLINE_WAIT_RETRIES) {
+            op.resolver?.(false, ExecutionResult._FailNoretry);
+            op.resolver = undefined;
+          }
           this._queue.unshift(op);
         });
         return this._delayBeforeNextExecution(ops[0].retries);
@@ -562,7 +570,10 @@ export class OperationRepo implements IOperationRepo, IStartableService {
   ): Promise<void> {
     Log._debug(`retryAfterSeconds: ${retryAfterSeconds}`);
     const retryAfterSecondsMs = (retryAfterSeconds || 0) * 1000;
-    const delayForOnRetries = retries * OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF;
+    const delayForOnRetries = Math.min(
+      retries * OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF,
+      OP_REPO_MAX_FAIL_RETRY_BACKOFF,
+    );
     const delayFor = Math.max(delayForOnRetries, retryAfterSecondsMs);
 
     if (delayFor < 1) return;
@@ -573,7 +584,6 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
   public _getNextOps(bucketFilter: number): OperationQueueItem[] | null {
     if (!this._queue.length) return null;
-    if (!navigator.onLine) return null;
 
     // Until the requirement is known, an unsigned request could reach an app that
     // needs a JWT. Operations stay queued; the next tick re-reads the requirement.
