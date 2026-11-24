@@ -107,8 +107,11 @@ async function continueOrRestartSession(
     existingSession.status = SessionStatus._Active;
     existingSession.lastActivatedTimestamp = currentTimestamp;
     existingSession.lastDeactivatedTimestamp = null;
+    const createQueued =
+      existingSession.isSplitPending && (await startPendingSplit(options, existingSession));
     await db.put('Sessions', existingSession);
     if (existingSession.onSessionPendingFor) await sendPendingOnSession(options, existingSession);
+    if (createQueued) await drainSessionRequests();
     return;
   }
 
@@ -177,11 +180,17 @@ async function releaseHeldCreate(
   includeAnonymous: boolean,
 ): Promise<boolean> {
   const { sessionId, usesSessionsApi } = session;
-  if (!usesSessionsApi || !sessionId || !isCreateHeld(session)) return false;
+  if (!usesSessionsApi || !sessionId || !isCreateHeld(session) || session.isSplitPending) {
+    return false;
+  }
   // A row saved before the hold existed has no flag, so it releases as soon as the IDs allow.
   if (session.isCreateHeld && !session.externalId && !includeAnonymous) return false;
 
-  const { onesignalId, subscriptionId } = hasLocalId(session.onesignalId, session.subscriptionId)
+  // A tab that has not seen a switch still sends the user before it.
+  const useMessageIds =
+    hasLocalId(session.onesignalId, session.subscriptionId) &&
+    (session.isCreateHeld === undefined || user.externalId === session.externalId);
+  const { onesignalId, subscriptionId } = useMessageIds
     ? user
     : (session as Required<Pick<Session, 'onesignalId' | 'subscriptionId'>>);
   if (!(await enqueueCreate({ ...user, onesignalId, subscriptionId }, sessionId, session))) {
@@ -198,7 +207,7 @@ async function releaseHeldCreate(
 async function enqueueCreate(
   { appId, onesignalId, subscriptionId, subscriptionType }: SessionUser,
   sessionId: string,
-  { startTimestamp, notificationId }: Session,
+  { startTimestamp, sessionsApiStartTimestamp, notificationId }: Session,
 ): Promise<boolean> {
   // Queued records are never rewritten, so a create with a local ID could never send.
   if (!subscriptionType || hasLocalId(onesignalId, subscriptionId)) {
@@ -212,8 +221,9 @@ async function enqueueCreate(
       onesignalId,
       subscriptionId,
       subscriptionType,
-      startTime: startTimestamp,
-      directAttributionId: notificationId || undefined,
+      startTime: sessionsApiStartTimestamp ?? startTimestamp,
+      // A click attributes the session it opened, not one split from it.
+      directAttributionId: (sessionsApiStartTimestamp === undefined && notificationId) || undefined,
     }),
   );
 }
@@ -230,6 +240,94 @@ async function tryEnqueue(enqueue: () => Promise<void>): Promise<boolean> {
 
 function hasLocalId(...ids: (string | undefined)[]): boolean {
   return ids.some((id) => IDManager._isLocalId(id));
+}
+
+/**
+ * Moves the session to the user who logged in or out. A held create moves with
+ * the session and keeps its start time. An anonymous session whose create went
+ * out stays on that user, so a login adds no session; the external ID is kept
+ * so a later switch splits. A logged-in user's session splits, even while its
+ * create waits for server IDs: the worker never gets that user's, so that part
+ * is not reported rather than counted for the next user. A session past the
+ * threshold is left for the next upsert to end.
+ */
+export async function switchSessionUser(options: UpsertOrDeactivateSessionPayload): Promise<void> {
+  // A split ends a session whose create may have just gone out.
+  if (await serializeSessionRefresh(() => moveOrSplitSession(options))) {
+    await drainSessionRequests(true);
+  }
+}
+
+async function moveOrSplitSession(user: UpsertOrDeactivateSessionPayload): Promise<boolean> {
+  const session = await getCurrentSession();
+  if (!session?.usesSessionsApi || !session.sessionId || hasExpired(session, user)) return false;
+  // Sent again once the switch finishes, with the server IDs.
+  if (session.externalId === user.externalId) return releaseHeldCreate(user, session, false);
+
+  if (session.externalId && !session.isCreateHeld) return splitSession(user, session);
+
+  if (isCreateHeld(session)) {
+    session.onesignalId = user.onesignalId;
+    session.subscriptionId = user.subscriptionId;
+    // Local IDs may have been the only hold, and the new IDs can be server ones.
+    session.isCreateHeld = true;
+  }
+  session.externalId = user.externalId;
+  if (await releaseHeldCreate(user, session, false)) return true;
+  await db.put('Sessions', session);
+  return false;
+}
+
+function hasExpired(session: Session, { sessionThreshold }: UpsertOrDeactivateSessionPayload) {
+  return (
+    session.status === SessionStatus._Inactive &&
+    !!session.lastDeactivatedTimestamp &&
+    timeInSecondsBetweenTimestamps(Date.now(), session.lastDeactivatedTimestamp) > sessionThreshold
+  );
+}
+
+/**
+ * Ends the session at the switch and starts the next one for the new user,
+ * held like any new session. Only the sessions API session splits: the app
+ * session, its start time and the legacy reporting go on, so no on_session,
+ * outcome reset or click cleanup runs. In the background the session ends now
+ * with the duration it has, and the next one starts on the next activation.
+ */
+async function splitSession(user: UpsertOrDeactivateSessionPayload, session: Session) {
+  const now = Date.now();
+  const active = session.status === SessionStatus._Active;
+  const duration =
+    session.accumulatedDuration +
+    (active ? timeInSecondsBetweenTimestamps(now, session.lastActivatedTimestamp) : 0);
+  const endTime = active ? now : (session.lastDeactivatedTimestamp ?? now);
+  const endQueued = await enqueueDurationUpdate(
+    user,
+    { ...session, accumulatedDuration: duration },
+    endTime,
+  );
+
+  Object.assign(session, {
+    sessionId: crypto.randomUUID(),
+    onesignalId: user.onesignalId,
+    subscriptionId: user.subscriptionId,
+    externalId: user.externalId,
+    isCreateHeld: true,
+    isSplitPending: !active,
+    sessionsApiStartTimestamp: now,
+    accumulatedDuration: 0,
+    checkpointedDuration: undefined,
+    lastActivatedTimestamp: active ? now : session.lastActivatedTimestamp,
+  } satisfies Partial<Session>);
+  const createQueued = await releaseHeldCreate(user, session, false);
+  if (!createQueued) await db.put('Sessions', session);
+  return endQueued || createQueued;
+}
+
+/** The caller saves the session. */
+function startPendingSplit(user: SessionUser, session: Session): Promise<boolean> {
+  session.isSplitPending = false;
+  session.sessionsApiStartTimestamp = session.lastActivatedTimestamp;
+  return releaseHeldCreate(user, session, false);
 }
 
 // Call through serializeSessionRefresh.

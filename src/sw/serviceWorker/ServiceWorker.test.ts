@@ -29,6 +29,7 @@ import {
   deactivateSession,
   sendSessionHeartbeat,
   serializeSessionRefresh,
+  switchSessionUser,
   upsertSession,
 } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
@@ -1808,7 +1809,11 @@ describe('ServiceWorker', () => {
         test('a session started with local ids gets its create and end once a deactivate brings server ids', async () => {
           await db.put(
             'Sessions',
-            apiSession({ onesignalId: 'local-user', subscriptionId: 'local-subscription' }),
+            apiSession({
+              onesignalId: 'local-user',
+              subscriptionId: 'local-subscription',
+              externalId: EXTERNAL_ID,
+            }),
           );
 
           await deactivate();
@@ -2132,7 +2137,11 @@ describe('ServiceWorker', () => {
         test('a session started with local ids gets its create and checkpoint once a deactivate brings server ids', async () => {
           await db.put(
             'Sessions',
-            activeSession({ onesignalId: 'local-user', subscriptionId: 'local-subscription' }),
+            activeSession({
+              onesignalId: 'local-user',
+              subscriptionId: 'local-subscription',
+              externalId: EXTERNAL_ID,
+            }),
           );
 
           await deactivate();
@@ -2594,6 +2603,327 @@ describe('ServiceWorker', () => {
           await upsertSession({ ...anonymous, ...local, sessionThreshold: 30 });
 
           expect(await queued()).toEqual([]);
+        });
+      });
+
+      describe('sessions API user switch', () => {
+        const OTHER_ID = 'other-onesignal-id';
+        const queued = async () =>
+          (await db.getAll('SessionRequests')).sort((a, b) => a.order - b.order);
+        const page = { ...baseMessagePayload, isSafari: false, sessionThreshold: 30 };
+        const anonymous = { externalId: undefined };
+        const switchTo = (user: Partial<UpsertOrDeactivateSessionPayload>) =>
+          switchSessionUser({ ...page, sessionOrigin: SessionOrigin._UserSwitch, ...user });
+        const apiSession = (overrides: Partial<Session> = {}): Session => ({
+          ...session,
+          accumulatedDuration: 40,
+          lastActivatedTimestamp: Date.now() - 20_000,
+          sessionId: 's1',
+          usesSessionsApi: true,
+          onesignalId: ONESIGNAL_ID,
+          subscriptionId: SUB_ID,
+          externalId: 'user-a',
+          ...overrides,
+        });
+        const current = async () => (await getCurrentSession())!;
+
+        beforeEach(async () => {
+          setUpdateUserResponse();
+          getHandler({ uri: '**/outcomes/measure', method: 'post', status: 200 });
+          vi.mocked(drainSessionRequests).mockClear();
+          await db.put('Options', {
+            key: 'featureFlags',
+            value: JSON.stringify([FeatureFlag._SessionsV2ApiCutover]),
+          });
+        });
+
+        afterEach(async () => {
+          await db.delete('Options', 'featureFlags');
+        });
+
+        test('a login while the create is held moves the session, and its create goes out once the user has server ids', async () => {
+          await db.put('Sessions', apiSession({ externalId: undefined, isCreateHeld: true }));
+
+          await switchTo({ externalId: 'user-a', onesignalId: 'local-user' });
+          expect(await current()).toMatchObject({
+            sessionId: 's1',
+            externalId: 'user-a',
+            onesignalId: 'local-user',
+          });
+          expect(await queued()).toEqual([]);
+
+          await switchTo({ externalId: 'user-a', onesignalId: OTHER_ID });
+          expect(await queued()).toEqual([
+            expect.objectContaining({
+              kind: 'create',
+              sessionId: 's1',
+              onesignalId: OTHER_ID,
+              startTime: session.startTimestamp,
+            }),
+          ]);
+          expect(drainSessionRequests).toHaveBeenCalledOnce();
+        });
+
+        test('a login whose user already has server ids sends the moved create right away', async () => {
+          await db.put('Sessions', apiSession({ externalId: undefined, isCreateHeld: true }));
+
+          await switchTo({ externalId: 'user-a', onesignalId: OTHER_ID });
+
+          expect(await queued()).toEqual([
+            expect.objectContaining({ kind: 'create', sessionId: 's1', onesignalId: OTHER_ID }),
+          ]);
+        });
+
+        test.each([
+          ['a login', 'user-b'],
+          ['a logout', undefined],
+        ])(
+          '%s from a logged-in session started with local ids splits it, reporting none of it',
+          async (_, externalId) => {
+            vi.useFakeTimers({ toFake: ['Date'] });
+            const switchedAt = Date.now();
+            await db.put(
+              'Sessions',
+              apiSession({
+                isCreateHeld: false,
+                onesignalId: 'local-user',
+                subscriptionId: 'local-subscription',
+              }),
+            );
+
+            await switchTo({ externalId, onesignalId: OTHER_ID });
+
+            const next = await current();
+            expect(next.sessionId).not.toBe('s1');
+            expect(next).toMatchObject({
+              externalId,
+              onesignalId: OTHER_ID,
+              sessionsApiStartTimestamp: switchedAt,
+              accumulatedDuration: 0,
+              isCreateHeld: !externalId,
+            });
+            expect(await queued()).toEqual(
+              externalId
+                ? [
+                    expect.objectContaining({
+                      kind: 'create',
+                      sessionId: next.sessionId,
+                      onesignalId: OTHER_ID,
+                      startTime: switchedAt,
+                    }),
+                  ]
+                : [],
+            );
+            vi.useRealTimers();
+          },
+        );
+
+        test('a login after the anonymous create went out keeps the session, and a later login splits', async () => {
+          await db.put('Sessions', apiSession({ externalId: undefined }));
+
+          await switchTo({ externalId: 'user-a', onesignalId: 'local-user' });
+          expect(await current()).toMatchObject({
+            sessionId: 's1',
+            onesignalId: ONESIGNAL_ID,
+            externalId: 'user-a',
+          });
+          expect(await queued()).toEqual([]);
+
+          await switchTo({ externalId: 'user-b', onesignalId: 'local-user-b' });
+          expect(await queued()).toEqual([
+            expect.objectContaining({
+              kind: 'update',
+              sessionId: 's1',
+              endTime: expect.any(Number),
+            }),
+          ]);
+          expect((await current()).sessionId).not.toBe('s1');
+        });
+
+        test('a focused split ends the session at the switch and starts the next one for the new user', async () => {
+          vi.useFakeTimers({ toFake: ['Date'] });
+          const switchedAt = Date.now();
+          await db.put('Sessions', apiSession({ notificationId, checkpointedDuration: 30 }));
+
+          await switchTo({ externalId: 'user-b', onesignalId: OTHER_ID });
+
+          const next = await current();
+          expect(next).toMatchObject({
+            externalId: 'user-b',
+            onesignalId: OTHER_ID,
+            sessionsApiStartTimestamp: switchedAt,
+            lastActivatedTimestamp: switchedAt,
+            accumulatedDuration: 0,
+            startTimestamp: session.startTimestamp,
+            status: SessionStatus._Active,
+          });
+          expect(next.checkpointedDuration).toBeUndefined();
+          const [end, create, ...rest] = await queued();
+          expect(rest).toEqual([]);
+          expect(end).toMatchObject({
+            kind: 'update',
+            sessionId: 's1',
+            onesignalId: ONESIGNAL_ID,
+            durationSeconds: 60,
+            endTime: switchedAt,
+          });
+          expect(create).toMatchObject({
+            kind: 'create',
+            sessionId: next.sessionId,
+            onesignalId: OTHER_ID,
+            startTime: switchedAt,
+          });
+          expect(create).not.toHaveProperty('directAttributionId', expect.anything());
+          // The app session goes on.
+          expect(updateUserFn).not.toHaveBeenCalled();
+          expect(drainSessionRequests).toHaveBeenCalledExactlyOnceWith(true);
+          vi.useRealTimers();
+        });
+
+        test('a logout splits, and the next session holds its anonymous create', async () => {
+          await db.put('Sessions', apiSession());
+
+          await switchTo({ ...anonymous, onesignalId: OTHER_ID });
+
+          expect(await queued()).toEqual([
+            expect.objectContaining({ kind: 'update', sessionId: 's1' }),
+          ]);
+          expect(await current()).toMatchObject({ isCreateHeld: true, externalId: undefined });
+        });
+
+        test('logout then login splits once, and the next session moves to the user who logged in', async () => {
+          await db.put('Sessions', apiSession());
+
+          await switchTo({ ...anonymous, onesignalId: 'local-anon' });
+          await switchTo({ externalId: 'user-b', onesignalId: OTHER_ID });
+
+          const next = await current();
+          expect((await queued()).map((r) => [r.kind, r.sessionId])).toEqual([
+            ['update', 's1'],
+            ['create', next.sessionId],
+          ]);
+          expect(next.externalId).toBe('user-b');
+        });
+
+        describe('in the background', () => {
+          const deactivatedAt = Date.now() - 5_000;
+          const backgrounded = () =>
+            apiSession({
+              status: SessionStatus._Inactive,
+              lastDeactivatedTimestamp: deactivatedAt,
+            });
+
+          test('ends the session now, and starts the next one on the next activation', async () => {
+            await db.put('Sessions', backgrounded());
+
+            await switchTo({ externalId: 'user-b', onesignalId: OTHER_ID });
+            expect(await queued()).toEqual([
+              expect.objectContaining({
+                kind: 'update',
+                sessionId: 's1',
+                durationSeconds: 40,
+                endTime: deactivatedAt,
+              }),
+            ]);
+            expect(await current()).toMatchObject({ isSplitPending: true });
+
+            await upsertSession({ ...page, externalId: 'user-b', onesignalId: OTHER_ID });
+
+            const next = await current();
+            expect(next).toMatchObject({
+              isSplitPending: false,
+              sessionsApiStartTimestamp: next.lastActivatedTimestamp,
+            });
+            expect((await queued())[1]).toMatchObject({
+              kind: 'create',
+              sessionId: next.sessionId,
+              onesignalId: OTHER_ID,
+              startTime: next.lastActivatedTimestamp,
+            });
+            expect(updateUserFn).not.toHaveBeenCalled();
+          });
+
+          test('a session that expires before the next activation sends no second end', async () => {
+            await db.put('Sessions', backgrounded());
+            await switchTo({ externalId: 'user-b', onesignalId: OTHER_ID });
+            await db.put('Sessions', {
+              ...(await current()),
+              lastDeactivatedTimestamp: Date.now() - 60_000,
+            });
+
+            await upsertSession({ ...page, externalId: 'user-b', onesignalId: OTHER_ID });
+
+            const next = await current();
+            expect((await queued()).map((r) => [r.kind, r.sessionId])).toEqual([
+              ['update', 's1'],
+              ['create', next.sessionId],
+            ]);
+          });
+        });
+
+        test.each<[string, Partial<Session>]>([
+          [
+            'a session past the threshold',
+            { status: SessionStatus._Inactive, lastDeactivatedTimestamp: Date.now() - 60_000 },
+          ],
+          ['a legacy session', { usesSessionsApi: false }],
+        ])('%s is left alone', async (_, overrides) => {
+          await db.put('Sessions', apiSession(overrides));
+
+          await switchTo({ externalId: 'user-b', onesignalId: OTHER_ID });
+
+          expect(await queued()).toEqual([]);
+          expect(await current()).toMatchObject({ sessionId: 's1', externalId: 'user-a' });
+        });
+
+        test('a switch that reaches the worker before the debounced upsert still moves the session it starts', async () => {
+          let fireDebounce!: () => Promise<void>;
+          vi.mocked(cancelableTimeout).mockImplementationOnce((callback) => ({
+            promise: new Promise<void>((resolve) => {
+              fireDebounce = () => callback().then(resolve);
+            }),
+            cancel: vi.fn(),
+          }));
+          const message = (command: string, user: Partial<UpsertOrDeactivateSessionPayload>) =>
+            new ExtendableMessageEvent('message', {
+              command,
+              payload: { ...page, sessionOrigin: SessionOrigin._Focus, ...user },
+            });
+
+          await dispatchEvent(message(WorkerMessengerCommand._SessionUpsert, anonymous));
+          await dispatchEvent(
+            message(WorkerMessengerCommand._SessionUserSwitch, {
+              externalId: 'user-a',
+              onesignalId: OTHER_ID,
+              sessionOrigin: SessionOrigin._UserSwitch,
+            }),
+          );
+          expect(await getCurrentSession()).toBeNull();
+
+          await fireDebounce();
+
+          expect(await current()).toMatchObject({ externalId: 'user-a', onesignalId: OTHER_ID });
+          expect(await queued()).toEqual([
+            expect.objectContaining({ kind: 'create', onesignalId: OTHER_ID }),
+          ]);
+        });
+
+        test('the worker handles the switch message', async () => {
+          await db.put('Sessions', apiSession());
+
+          await dispatchEvent(
+            new ExtendableMessageEvent('message', {
+              command: WorkerMessengerCommand._SessionUserSwitch,
+              payload: {
+                ...page,
+                sessionOrigin: SessionOrigin._UserSwitch,
+                externalId: 'user-b',
+              } satisfies UpsertOrDeactivateSessionPayload,
+            }),
+          );
+
+          expect((await current()).externalId).toBe('user-b');
+          expect(drainSessionRequests).toHaveBeenCalled();
         });
       });
 
