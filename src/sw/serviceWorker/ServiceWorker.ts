@@ -16,6 +16,7 @@ import {
   deactivateSession,
   sendSessionHeartbeat,
   serializeSessionRefresh,
+  switchSessionUser,
   upsertSession,
 } from 'src/shared/helpers/service-worker';
 import Log from 'src/shared/libraries/Log';
@@ -124,6 +125,18 @@ export function run() {
         event.waitUntil(
           sendSessionHeartbeat(payload as UpsertOrDeactivateSessionPayload).catch((e) =>
             Log._error('[SW] heartbeat failed', e),
+          ),
+        );
+        break;
+      case WorkerMessengerCommand._SessionUserSwitch:
+        Log._debug('[SW] SessionUserSwitch');
+        lastUserSwitch = {
+          payload: payload as UpsertOrDeactivateSessionPayload,
+          seq: ++userSwitchSeq,
+        };
+        event.waitUntil(
+          switchSessionUser(payload as UpsertOrDeactivateSessionPayload).catch((e) =>
+            Log._error('[SW] session user switch failed', e),
           ),
         );
         break;
@@ -422,6 +435,7 @@ async function updateSessionBasedOnHasActive(
   event: ExtendableMessageEvent,
   hasAnyActiveSessions: boolean,
   options: UpsertOrDeactivateSessionPayload,
+  userSwitchSeqAtMessage: number,
 ) {
   debouncedBackgroundOrigin = undefined;
   const cancelableFinalize = await serializeSessionRefresh<CancelableTimeoutPromise | void>(() =>
@@ -431,11 +445,17 @@ async function updateSessionBasedOnHasActive(
     self.cancel = cancelableFinalize.cancel;
     event.waitUntil(cancelableFinalize.promise);
   }
+  // The refresh used a payload from before the switch, so it may have started
+  // the session for the previous user. A switch for the user it follows is a no-op.
+  if (lastUserSwitch && lastUserSwitch.seq > userSwitchSeqAtMessage) {
+    await switchSessionUser(lastUserSwitch.payload);
+  }
 }
 
 async function refreshSession(
   event: ExtendableMessageEvent,
   options: UpsertOrDeactivateSessionPayload,
+  userSwitchSeqAtMessage: number,
 ): Promise<void> {
   Log._debug('[SW] refreshSession');
   /**
@@ -446,11 +466,16 @@ async function refreshSession(
   const windowClients = await getWindowClients();
 
   if (options.isSafari) {
-    checkIfAnyClientsFocusedAndUpdateSession(event, windowClients, options);
+    checkIfAnyClientsFocusedAndUpdateSession(event, windowClients, options, userSwitchSeqAtMessage);
   } else {
     const hasAnyActiveSessions: boolean = windowClients.some((w) => (w as WindowClient).focused);
     Log._debug('[SW] hasAnyActive', hasAnyActiveSessions);
-    await updateSessionBasedOnHasActive(event, hasAnyActiveSessions, options);
+    await updateSessionBasedOnHasActive(
+      event,
+      hasAnyActiveSessions,
+      options,
+      userSwitchSeqAtMessage,
+    );
   }
 }
 
@@ -458,6 +483,7 @@ function checkIfAnyClientsFocusedAndUpdateSession(
   event: ExtendableMessageEvent,
   windowClients: ReadonlyArray<Client>,
   sessionInfo: UpsertOrDeactivateSessionPayload,
+  userSwitchSeqAtMessage: number,
 ): void {
   const timestamp = new Date().getTime();
   self.clientsStatus = {
@@ -478,6 +504,7 @@ function checkIfAnyClientsFocusedAndUpdateSession(
       event,
       self.clientsStatus!.hasAnyActiveSessions,
       sessionInfo,
+      userSwitchSeqAtMessage,
     );
     self.clientsStatus = undefined;
   };
@@ -495,12 +522,21 @@ function checkIfAnyClientsFocusedAndUpdateSession(
  */
 let debouncedBackgroundOrigin: SessionOriginValue | undefined;
 
+/**
+ * Upserts and deactivates wait out the debounce, but a switch runs at once. A
+ * login right after load can thus reach the worker before the upsert that
+ * starts the session, so that refresh runs the last switch again.
+ */
+let lastUserSwitch: { payload: UpsertOrDeactivateSessionPayload; seq: number } | undefined;
+let userSwitchSeq = 0;
+
 function debounceRefreshSession(
   event: ExtendableMessageEvent,
   payload: UpsertOrDeactivateSessionPayload,
 ) {
   Log._debug('[SW] debounceRefresh', redactJwt(payload));
   if (isBackgroundOrigin(payload.sessionOrigin)) debouncedBackgroundOrigin = payload.sessionOrigin;
+  const userSwitchSeqAtMessage = userSwitchSeq;
 
   if (self.cancel) {
     self.cancel();
@@ -509,7 +545,7 @@ function debounceRefreshSession(
 
   const executeRefreshSession = async () => {
     const sessionOrigin = debouncedBackgroundOrigin ?? payload.sessionOrigin;
-    await refreshSession(event, { ...payload, sessionOrigin });
+    await refreshSession(event, { ...payload, sessionOrigin }, userSwitchSeqAtMessage);
   };
 
   const cancelableRefreshSession = cancelableTimeout(executeRefreshSession, 1);

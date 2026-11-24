@@ -10,6 +10,7 @@ export const WorkerMessengerCommand = {
   _SessionUpsert: 'os.session.upsert',
   _SessionDeactivate: 'os.session.deactivate',
   _SessionHeartbeat: 'os.session.heartbeat',
+  _SessionUserSwitch: 'os.session.userSwitch',
   _AreYouVisible: 'os.page_focused_request',
   _AreYouVisibleResponse: 'os.page_focused_response',
   _SetLogging: 'os.set_sw_logging',

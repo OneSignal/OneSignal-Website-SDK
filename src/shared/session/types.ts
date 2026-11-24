@@ -40,13 +40,20 @@ export interface Session {
    */
   onesignalId?: string;
   subscriptionId?: string;
-  /** The external ID of the user the session started with. Unset for an anonymous user. */
+  /** The external ID of the user the session follows. Unset for an anonymous user. */
   externalId?: string;
   /**
    * An anonymous session's create is not queued until the first background, a
    * heartbeat, or the session end. A create also waits while the IDs are local.
    */
   isCreateHeld?: boolean;
+  /**
+   * Set when a user switch splits the sessions API session. The app session,
+   * and its start time, go on.
+   */
+  sessionsApiStartTimestamp?: number;
+  /** A switch in the background ended the session. The next one starts on the next activation. */
+  isSplitPending?: boolean;
   /** The duration of the last checkpoint or heartbeat queued for this session. */
   checkpointedDuration?: number;
 }

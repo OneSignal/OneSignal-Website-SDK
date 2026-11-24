@@ -15,6 +15,7 @@ export const SessionOrigin = {
   _Blur: 8,
   _JwtUpdated: 9,
   _Heartbeat: 10,
+  _UserSwitch: 11,
 } as const;
 
 export const DEFAULT_HEARTBEAT_INTERVAL_SECONDS = 30 * 60;
