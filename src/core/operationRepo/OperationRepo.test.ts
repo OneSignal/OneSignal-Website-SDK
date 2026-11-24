@@ -1403,15 +1403,16 @@ describe('OperationRepo', () => {
       expect(opRepo._getNextOps(0)).toBeNull();
     });
 
-    test('does not start operations while the browser is offline', () => {
+    test('sends operations while the browser reports offline', async () => {
       const onLineSpy = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
-      opRepo._enqueue(mockOperation);
+      const resolved = vi.fn();
+      void opRepo._enqueueAndWait(mockOperation).then(resolved);
 
-      expect(opRepo._getNextOps(0)).toBeNull();
-      expect(opRepo._queue).toHaveLength(1);
+      await executeOps(opRepo);
 
-      onLineSpy.mockReturnValue(true);
-      expect(opRepo._getNextOps(0)).toEqual([{ operation: mockOperation, bucket: 0, retries: 0 }]);
+      expect(executeFn).toHaveBeenCalledWith([mockOperation]);
+      expect(opRepo._queue).toEqual([]);
+      await vi.waitUntil(() => resolved.mock.calls.length === 1);
       onLineSpy.mockRestore();
     });
 

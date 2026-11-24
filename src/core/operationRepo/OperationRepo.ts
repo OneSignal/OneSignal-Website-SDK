@@ -573,7 +573,6 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
   public _getNextOps(bucketFilter: number): OperationQueueItem[] | null {
     if (!this._queue.length) return null;
-    if (!navigator.onLine) return null;
 
     // Until the requirement is known, an unsigned request could reach an app that
     // needs a JWT. Operations stay queued; the next tick re-reads the requirement.
