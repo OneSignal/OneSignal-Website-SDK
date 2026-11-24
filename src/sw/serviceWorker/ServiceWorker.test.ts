@@ -1403,6 +1403,17 @@ describe('ServiceWorker', () => {
           ]);
         });
 
+        test('a row saved before the hold, with no external id, still gets its create on the next upsert', async () => {
+          await enableSessionsApi();
+          await db.put('Sessions', localSession({ externalId: undefined }));
+
+          await upsert();
+
+          expect(await queued()).toEqual([
+            expect.objectContaining({ kind: 'create', sessionId: 'local-started' }),
+          ]);
+        });
+
         test('a deferred create drains only after the session is resumed', async () => {
           await enableSessionsApi();
           await db.put(
@@ -2493,6 +2504,16 @@ describe('ServiceWorker', () => {
           expect((await getCurrentSession())!.isCreateHeld).toBe(true);
         });
 
+        test('a create released by a deactivate that stops early is still drained', async () => {
+          const started = await startAnonymous();
+          await db.put('Sessions', { ...started, status: 'unknown' as Session['status'] });
+
+          await deactivateSession({ ...anonymous, sessionOrigin: SessionOrigin._VisibilityHidden });
+
+          expect(await kinds()).toEqual(['create']);
+          expect(drainSessionRequests).toHaveBeenCalled();
+        });
+
         test('the held create carries the notification click that started the session', async () => {
           await db.put('Outcomes.NotificationClicked', {
             appId,
@@ -2513,15 +2534,14 @@ describe('ServiceWorker', () => {
         test('an anonymous user with a local id reports nothing, even at the end', async () => {
           const local = { onesignalId: 'local-user', jwtRequired: true };
           await startAnonymous(local);
-          await activeFor(10);
-
-          await deactivate(SessionOrigin._VisibilityHidden, local);
           await activeFor(DEFAULT_HEARTBEAT_INTERVAL_SECONDS);
           await sendSessionHeartbeat({
             ...anonymous,
             ...local,
             sessionOrigin: SessionOrigin._Heartbeat,
           });
+
+          await deactivate(SessionOrigin._VisibilityHidden, local);
           const current = (await getCurrentSession())!;
           await db.put('Sessions', {
             ...current,

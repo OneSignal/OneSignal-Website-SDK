@@ -177,7 +177,8 @@ async function releaseHeldCreate(
 ): Promise<boolean> {
   const { sessionId, usesSessionsApi } = session;
   if (!usesSessionsApi || !sessionId || !isCreateHeld(session)) return false;
-  if (!session.externalId && !includeAnonymous) return false;
+  // A row saved before the hold existed has no flag, so it releases as soon as the IDs allow.
+  if (session.isCreateHeld && !session.externalId && !includeAnonymous) return false;
 
   const { onesignalId, subscriptionId } = hasLocalId(session.onesignalId, session.subscriptionId)
     ? user
@@ -276,9 +277,9 @@ export async function deactivateSession(
   if (existingSession.status === SessionStatus._Inactive) {
     // A blur made the session inactive without a checkpoint; the tab hiding later does.
     const checkpointQueued = await enqueueCheckpoint(options, existingSession);
-    if (checkpointQueued && !(await saveCheckpointedDuration(existingSession))) return undefined;
+    const saved = !checkpointQueued || (await saveCheckpointedDuration(existingSession));
     if (checkpointQueued || createQueued) void drainSessionRequests();
-    return cancelableTimeout(finalizeSWSession, thresholdInSeconds);
+    return saved ? cancelableTimeout(finalizeSWSession, thresholdInSeconds) : undefined;
   }
 
   /**
@@ -287,6 +288,7 @@ export async function deactivateSession(
    */
   if (existingSession.status !== SessionStatus._Active) {
     Log._warn(`Invalid session state: ${String(existingSession.status)}`);
+    if (createQueued) void drainSessionRequests();
     return undefined;
   }
 
