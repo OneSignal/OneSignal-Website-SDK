@@ -27,6 +27,7 @@ import {
   OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF,
   OP_REPO_EXECUTION_INTERVAL,
   OP_REPO_MAX_FAIL_RETRY_BACKOFF,
+  OP_REPO_MAX_OFFLINE_WAIT_RETRIES,
   OP_REPO_POST_CREATE_DELAY,
 } from './constants';
 import { type NewRecordsState } from './NewRecordsState';
@@ -472,9 +473,15 @@ export class OperationRepo implements IOperationRepo, IStartableService {
       }
     } catch (e) {
       // No response from the server while offline, so keep the operations and send them later.
+      // navigator.onLine can be false while the network works and a CSP or firewall blocks
+      // the request, so reject a waiter after some passes. Its operation stays queued.
       if (e === RetryLimitError && !navigator.onLine) {
         [...ops].reverse().forEach((op) => {
           op.retries++;
+          if (op.retries >= OP_REPO_MAX_OFFLINE_WAIT_RETRIES) {
+            op.resolver?.(false, ExecutionResult._FailNoretry);
+            op.resolver = undefined;
+          }
           this._queue.unshift(op);
         });
         return this._delayBeforeNextExecution(ops[0].retries);

@@ -29,6 +29,7 @@ import { ExecutionResult, type IOperationExecutor } from '../types/operation';
 import {
   OP_REPO_DEFAULT_FAIL_RETRY_BACKOFF,
   OP_REPO_MAX_FAIL_RETRY_BACKOFF,
+  OP_REPO_MAX_OFFLINE_WAIT_RETRIES,
   OP_REPO_POST_CREATE_DELAY,
 } from './constants';
 import { NewRecordsState } from './NewRecordsState';
@@ -1457,6 +1458,31 @@ describe('OperationRepo', () => {
       expect(opRepo._queue).toEqual([]);
       expect(mockOperationModelStore._list()).toEqual([]);
       expect(resolved).toHaveBeenCalled();
+      onLineSpy.mockRestore();
+    });
+
+    test('rejects the waiter after the offline retry limit but keeps the operation queued', async () => {
+      const onLineSpy = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      executeFn.mockRejectedValue(RetryLimitError);
+      const op = new Operation('1');
+      const rejected = vi.fn();
+      opRepo._enqueueAndWait(op).catch(rejected);
+
+      for (let pass = 1; pass < OP_REPO_MAX_OFFLINE_WAIT_RETRIES; pass++) {
+        await executeOps(opRepo);
+      }
+      expect(opRepo._queue[0].resolver).toEqual(expect.any(Function));
+
+      await executeOps(opRepo);
+      expect(opRepo._queue).toEqual([
+        { operation: op, bucket: 0, retries: OP_REPO_MAX_OFFLINE_WAIT_RETRIES },
+      ]);
+      await vi.waitUntil(() => rejected.mock.calls.length === 1);
+
+      executeFn.mockResolvedValue({ _result: ExecutionResult._Success });
+      onLineSpy.mockReturnValue(true);
+      await executeOps(opRepo);
+      expect(opRepo._queue).toEqual([]);
       onLineSpy.mockRestore();
     });
 
