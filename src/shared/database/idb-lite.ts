@@ -31,7 +31,7 @@ export function wrapDb<S extends { [K in keyof S]: { key: IDBValidKey; value: un
 
 export function openDB(
   name: string,
-  version: number,
+  version: number | undefined,
   callbacks?: {
     upgrade?: (
       db: IDBDatabase,
@@ -41,6 +41,7 @@ export function openDB(
     ) => void;
     blocked?: () => void;
     terminated?: () => void;
+    versionchange?: () => void;
   },
 ): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -53,10 +54,20 @@ export function openDB(
         req.transaction!, // per indexeddb spec, transaction is always defined for onupgradeneeded
       );
     req.onsuccess = () => {
-      if (callbacks?.terminated) req.result.onclose = callbacks.terminated;
-      resolve(req.result);
+      const db = req.result;
+      if (callbacks?.terminated) db.onclose = callbacks.terminated;
+      // An open connection blocks a newer SDK's upgrade until it closes.
+      db.onversionchange = () => {
+        db.close();
+        callbacks?.versionchange?.();
+      };
+      resolve(db);
     };
-    req.onerror = () => reject(req.error);
+    // A newer SDK already upgraded the DB (another tab, or a rollback); open it as is.
+    req.onerror = () =>
+      req.error?.name === 'VersionError'
+        ? resolve(openDB(name, undefined, callbacks))
+        : reject(req.error);
     req.onblocked = () => callbacks?.blocked?.();
   });
 }

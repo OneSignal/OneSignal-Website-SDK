@@ -473,9 +473,9 @@ export class OperationRepo implements IOperationRepo, IStartableService {
         await delay(OP_REPO_POST_CREATE_DELAY);
       }
     } catch (e) {
-      // No response, so keep the operations and retry, like FailRetry. Offline,
-      // _getNextOps holds the queue until the browser is back online. Waiters give up
-      // after a few tries so a blocked API cannot hang login() or init() forever.
+      // No response, so keep the operations and retry, like FailRetry. Waiters give up
+      // after a few tries so a blocked API or a wrong navigator.onLine cannot hang
+      // login() or init() forever.
       if (e === RetryLimitError) {
         [...ops].reverse().forEach((op) => {
           if (++op.retries >= OP_REPO_MAX_WAITER_RETRIES) {
@@ -577,7 +577,6 @@ export class OperationRepo implements IOperationRepo, IStartableService {
 
   public _getNextOps(bucketFilter: number): OperationQueueItem[] | null {
     if (!this._queue.length) return null;
-    if (!navigator.onLine) return null;
 
     // Until the requirement is known, an unsigned request could reach an app that
     // needs a JWT. Operations stay queued; the next tick re-reads the requirement.

@@ -19,6 +19,7 @@ import { server } from '__test__/support/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { CreateSubscriptionOperation } from 'src/core/operations/CreateSubscriptionOperation';
 import { LoginUserOperation } from 'src/core/operations/LoginUserOperation';
+import { UpdateSubscriptionOperation } from 'src/core/operations/UpdateSubscriptionOperation';
 import { JwtRequirement } from 'src/shared/config/jwtRequirement';
 import { setJwtRequirement } from 'src/shared/helpers/localStorage';
 import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
@@ -302,6 +303,9 @@ describe('SubscriptionManager', () => {
       );
       expect(pushModels()).toHaveLength(1);
       expect(pushModels()[0]).toMatchObject({ id: placeholderId, token });
+      expect(queue.some((item) => item.operation instanceof UpdateSubscriptionOperation)).toBe(
+        false,
+      );
 
       await OneSignal.updateUserJwt(EXTERNAL_ID, 'jwt-2');
       await grant;
