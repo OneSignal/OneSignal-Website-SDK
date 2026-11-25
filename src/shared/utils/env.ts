@@ -9,7 +9,7 @@ export const API_ORIGIN =
   typeof __API_ORIGIN__ === 'undefined'
     ? API_TYPE === 'development'
       ? 'localhost'
-      : 'staging.onesignal.com'
+      : 'api.staging.onesignal.com'
     : __API_ORIGIN__;
 
 export const BUILD_TYPE = typeof __BUILD_TYPE__ === 'undefined' ? 'production' : __BUILD_TYPE__;
