@@ -3,9 +3,14 @@
 // ^ This only applies to development mode since we have separate bundles (entries) for the service worker and the main bundle.
 
 // strings
-export const API_TYPE = typeof __API_TYPE__ === 'undefined' ? 'production' : __API_TYPE__;
+export const API_TYPE = typeof __API_TYPE__ === 'undefined' ? 'staging' : __API_TYPE__;
 
-export const API_ORIGIN = typeof __API_ORIGIN__ === 'undefined' ? 'localhost' : __API_ORIGIN__;
+export const API_ORIGIN =
+  typeof __API_ORIGIN__ === 'undefined'
+    ? API_TYPE === 'development'
+      ? 'localhost'
+      : 'staging.onesignal.com'
+    : __API_ORIGIN__;
 
 export const BUILD_TYPE = typeof __BUILD_TYPE__ === 'undefined' ? 'production' : __BUILD_TYPE__;
 

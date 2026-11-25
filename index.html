@@ -127,7 +127,10 @@
     <script>
       // set can a query param ?app_id=your_app_id OR
       // create an .env file and set VITE_APP_ID to your app id
-      const appId = new URLSearchParams(window.location.search).get('app_id') || '%VITE_APP_ID%';
+      const envAppId = '%VITE_APP_ID%';
+      const appId =
+        new URLSearchParams(window.location.search).get('app_id') ||
+        (envAppId.startsWith('%') ? 'e6206451-b9ed-4760-b2a0-0855c815e9a4' : envAppId);
 
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function (OneSignal) {
