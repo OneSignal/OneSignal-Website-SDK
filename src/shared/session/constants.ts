@@ -18,7 +18,7 @@ export const SessionOrigin = {
   _UserSwitch: 11,
 } as const;
 
-export const DEFAULT_HEARTBEAT_INTERVAL_SECONDS = 30 * 60;
+export const DEFAULT_HEARTBEAT_INTERVAL_SECONDS = 3 * 60;
 // Bounds a misconfigured server value so it can neither flood requests nor stop heartbeats.
 export const MIN_HEARTBEAT_INTERVAL_SECONDS = 60;
 export const MAX_HEARTBEAT_INTERVAL_SECONDS = 24 * 60 * 60;

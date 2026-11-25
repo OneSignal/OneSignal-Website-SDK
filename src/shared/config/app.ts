@@ -93,8 +93,7 @@ export function getMergedConfig(
       serverConfig.features.session_threshold ?? SERVER_CONFIG_DEFAULTS_SESSION.reportingThreshold,
     enableSessionDuration:
       serverConfig.features.web_on_focus_enabled ?? SERVER_CONFIG_DEFAULTS_SESSION.enableOnFocus,
-    heartbeatInterval: toHeartbeatInterval(
-      serverConfig.config.sessions?.heartbeat_interval_seconds,
-    ),
+    // Forced to 180 s for heartbeat testing, as if the params sent it.
+    heartbeatInterval: toHeartbeatInterval(180),
   };
 }
