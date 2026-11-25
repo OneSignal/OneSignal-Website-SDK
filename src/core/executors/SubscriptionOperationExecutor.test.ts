@@ -238,6 +238,27 @@ describe('SubscriptionOperationExecutor', () => {
       });
     });
 
+    test('should send the push keys of the create', async () => {
+      const executor = getExecutor();
+      const createOp = new CreateSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId: ONESIGNAL_ID,
+        subscriptionId: SUB_ID,
+        type: SubscriptionType._ChromePush,
+        token: 'test-token',
+        enabled: true,
+        notification_types: NotificationType._Subscribed,
+        web_auth: 'test-auth',
+        web_p256: 'test-p256',
+      });
+
+      await executor._execute([createOp]);
+
+      expect(createSubscriptionFn).toHaveBeenCalledWith({
+        subscription: expect.objectContaining({ web_auth: 'test-auth', web_p256: 'test-p256' }),
+      });
+    });
+
     test('should handle create and delete operations by succeeding immediately', async () => {
       const executor = getExecutor();
       const createOp = new CreateSubscriptionOperation({

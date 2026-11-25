@@ -55,6 +55,7 @@ export default class CoreModule {
       this._newRecordsState,
       this._jwtTokenStore,
       this._identityModelStore,
+      this._subscriptionModelStore,
     );
     this._customEventController = new CustomEventController(
       this._identityModelStore,

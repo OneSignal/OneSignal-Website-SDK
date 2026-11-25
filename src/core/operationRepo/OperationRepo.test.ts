@@ -7,12 +7,14 @@ import { delay as delaySpy } from 'src/shared/helpers/general';
 import { setConsentRequired, setJwtRequirement } from 'src/shared/helpers/localStorage';
 import Log from 'src/shared/libraries/Log';
 import { IDManager } from 'src/shared/managers/IDManager';
-import { SubscriptionType } from 'src/shared/subscriptions/constants';
+import { NotificationType, SubscriptionType } from 'src/shared/subscriptions/constants';
 import { afterEach, beforeEach, describe, expect, test, vi, type Mock } from 'vite-plus/test';
 
 import { JwtTokenStore } from '../JwtTokenStore';
 import { OperationModelStore } from '../modelRepo/OperationModelStore';
+import { SubscriptionModel } from '../models/SubscriptionModel';
 import { IdentityModelStore } from '../modelStores/IdentityModelStore';
+import { SubscriptionModelStore } from '../modelStores/SubscriptionModelStore';
 import { CreateSubscriptionOperation } from '../operations/CreateSubscriptionOperation';
 import { DeleteSubscriptionOperation } from '../operations/DeleteSubscriptionOperation';
 import { LoginUserOperation } from '../operations/LoginUserOperation';
@@ -53,6 +55,7 @@ vi.spyOn(OperationModelStore.prototype, '_create').mockImplementation(() => {
 let mockOperationModelStore: OperationModelStore;
 let jwtTokenStore: JwtTokenStore;
 let identityModelStore: IdentityModelStore;
+let subscriptionModelStore: SubscriptionModelStore;
 
 const executeOps = async (opRepo: OperationRepo) => {
   await opRepo._loadSavedOperations();
@@ -82,12 +85,14 @@ describe('OperationRepo', () => {
     mockOperationModelStore = new OperationModelStore();
     jwtTokenStore = new JwtTokenStore();
     identityModelStore = new IdentityModelStore();
+    subscriptionModelStore = new SubscriptionModelStore();
     opRepo = new OperationRepo(
       [mockExecutor],
       mockOperationModelStore,
       new NewRecordsState(),
       jwtTokenStore,
       identityModelStore,
+      subscriptionModelStore,
     );
   });
 
@@ -492,6 +497,184 @@ describe('OperationRepo', () => {
       expect(mockOperationModelStore._list()).toEqual([]);
     });
 
+    const addEmailModel = (subscriptionId: string) => {
+      const model = new SubscriptionModel();
+      model._mergeData({
+        id: subscriptionId,
+        type: SubscriptionType._Email,
+        token: 'user@example.com',
+        enabled: true,
+        notification_types: NotificationType._Subscribed,
+      });
+      subscriptionModelStore._add(model);
+    };
+    const emailCreate = (onesignalId: string, subscriptionId: string, externalId?: string) =>
+      new CreateSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId,
+        externalId,
+        token: 'user@example.com',
+        type: SubscriptionType._Email,
+        subscriptionId,
+      });
+    const expectCreateFor = (op: OperationBase, subscriptionId: string) => {
+      expect(op).toBeInstanceOf(CreateSubscriptionOperation);
+      expect(op).toMatchObject({
+        _appId: APP_ID,
+        _onesignalId: ONESIGNAL_ID,
+        _externalId: EXTERNAL_ID,
+        _subscriptionId: subscriptionId,
+        type: SubscriptionType._Email,
+        token: 'user@example.com',
+        enabled: true,
+        notification_types: NotificationType._Subscribed,
+      });
+    };
+
+    test('start: enqueues a create for the current user when the create of an earlier user is gone', async () => {
+      const subscriptionId = IDManager._createLocalId();
+      setCurrentUser(ONESIGNAL_ID, EXTERNAL_ID);
+      addEmailModel(subscriptionId);
+      seedSaved(emailCreate(IDManager._createLocalId(), subscriptionId, 'earlier-user'));
+
+      await opRepo._start();
+
+      expect(queued()).toHaveLength(1);
+      expectCreateFor(queued()[0], subscriptionId);
+      expect(mockOperationModelStore._list()).toEqual(queued());
+    });
+
+    test('start: enqueues no create when a queued transfer of the current user still sends the subscription', async () => {
+      const localId = IDManager._createLocalId();
+      const subscriptionId = IDManager._createLocalId();
+      setCurrentUser(localId, EXTERNAL_ID);
+      addEmailModel(subscriptionId);
+      const switchLogin = login(localId, EXTERNAL_ID);
+      const transfer = new TransferSubscriptionOperation({
+        appId: APP_ID,
+        onesignalId: localId,
+        externalId: EXTERNAL_ID,
+        subscriptionId,
+      });
+      seedSaved(
+        emailCreate(IDManager._createLocalId(), subscriptionId, 'earlier-user'),
+        switchLogin,
+        transfer,
+      );
+
+      await opRepo._start();
+
+      expect(queued()).toEqual([switchLogin, transfer]);
+    });
+
+    test('start: enqueues a login for a local current user that gets the create of an earlier user', async () => {
+      const currentId = IDManager._createLocalId();
+      const subscriptionId = IDManager._createLocalId();
+      setCurrentUser(currentId, EXTERNAL_ID);
+      addEmailModel(subscriptionId);
+      seedSaved(emailCreate(IDManager._createLocalId(), subscriptionId, 'earlier-user'));
+
+      await opRepo._start();
+
+      const batch = opRepo._getNextOps(Infinity)?.map((item) => item.operation);
+      expect(batch).toHaveLength(2);
+      expect(batch?.[0]).toBeInstanceOf(LoginUserOperation);
+      expect(batch?.[0]).toMatchObject({ _onesignalId: currentId, _externalId: EXTERNAL_ID });
+      expect(batch?.[1]).toBeInstanceOf(CreateSubscriptionOperation);
+      expect(batch?.[1]).toMatchObject({
+        _onesignalId: currentId,
+        _subscriptionId: subscriptionId,
+      });
+    });
+
+    test('start: IV active: enqueues a create for the current user when the create of an earlier user with no token is removed', async () => {
+      setJwtRequirement(JwtRequirement._Required);
+      const subscriptionId = IDManager._createLocalId();
+      setCurrentUser(ONESIGNAL_ID, EXTERNAL_ID);
+      addEmailModel(subscriptionId);
+      seedSaved(emailCreate('earlier-onesignal-id', subscriptionId, 'earlier-user'));
+
+      await opRepo._start();
+
+      expect(queued()).toHaveLength(1);
+      expectCreateFor(queued()[0], subscriptionId);
+    });
+
+    test('start: the create for the current user has the push keys of the model', async () => {
+      const subscriptionId = IDManager._createLocalId();
+      setCurrentUser(ONESIGNAL_ID, EXTERNAL_ID);
+      const model = new SubscriptionModel();
+      model._mergeData({
+        id: subscriptionId,
+        type: SubscriptionType._ChromePush,
+        token: 'push-token',
+        enabled: true,
+        notification_types: NotificationType._Subscribed,
+        web_auth: 'push-auth',
+        web_p256: 'push-p256',
+      });
+      subscriptionModelStore._add(model);
+      seedSaved(
+        new CreateSubscriptionOperation({
+          appId: APP_ID,
+          onesignalId: IDManager._createLocalId(),
+          externalId: 'earlier-user',
+          subscriptionId,
+          type: SubscriptionType._ChromePush,
+          token: 'push-token',
+        }),
+      );
+
+      await opRepo._start();
+
+      expect(queued()).toHaveLength(1);
+      expect(queued()[0]).toMatchObject({
+        _onesignalId: ONESIGNAL_ID,
+        token: 'push-token',
+        web_auth: 'push-auth',
+        web_p256: 'push-p256',
+      });
+    });
+
+    test('start: enqueues a create for the current user in place of its transfer when the create of an earlier user is gone', async () => {
+      const subscriptionId = IDManager._createLocalId();
+      setCurrentUser(ONESIGNAL_ID, EXTERNAL_ID);
+      addEmailModel(subscriptionId);
+      seedSaved(
+        emailCreate(IDManager._createLocalId(), subscriptionId, 'earlier-user'),
+        new TransferSubscriptionOperation({
+          appId: APP_ID,
+          onesignalId: ONESIGNAL_ID,
+          externalId: EXTERNAL_ID,
+          subscriptionId,
+        }),
+      );
+
+      await opRepo._start();
+
+      expect(queued()).toHaveLength(1);
+      expectCreateFor(queued()[0], subscriptionId);
+    });
+
+    test('start: enqueues a create for the current user in place of a transfer whose create is not queued', async () => {
+      const subscriptionId = IDManager._createLocalId();
+      setCurrentUser(ONESIGNAL_ID, EXTERNAL_ID);
+      addEmailModel(subscriptionId);
+      seedSaved(
+        new TransferSubscriptionOperation({
+          appId: APP_ID,
+          onesignalId: ONESIGNAL_ID,
+          externalId: EXTERNAL_ID,
+          subscriptionId,
+        }),
+      );
+
+      await opRepo._start();
+
+      expect(queued()).toHaveLength(1);
+      expectCreateFor(queued()[0], subscriptionId);
+    });
+
     test('start: keeps a local subscription that a queued login creates from a transfer', async () => {
       const localId = IDManager._createLocalId();
       const localSubId = IDManager._createLocalId();
@@ -551,6 +734,7 @@ describe('OperationRepo', () => {
         new NewRecordsState(),
         jwtTokenStore,
         identityModelStore,
+        subscriptionModelStore,
       );
       const tag = setTag(localId, EXTERNAL_ID);
       seedSaved(tag);
@@ -604,8 +788,77 @@ describe('OperationRepo', () => {
         new NewRecordsState(),
         jwtTokenStore,
         identityModelStore,
+        subscriptionModelStore,
       );
     };
+
+    test('a dropped login of an earlier user gives the create in its batch to the current user', async () => {
+      vi.spyOn(Log, '_error').mockImplementation(() => undefined);
+      useLoginExecutor(() => Promise.resolve({ _result: ExecutionResult._FailNoretry }));
+      const earlierId = IDManager._createLocalId();
+      const subscriptionId = IDManager._createLocalId();
+      setCurrentUser(ONESIGNAL_ID, EXTERNAL_ID);
+      addEmailModel(subscriptionId);
+      const earlierLogin = login(earlierId, 'earlier-user');
+      const earlierCreate = emailCreate(earlierId, subscriptionId, 'earlier-user');
+      opRepo._enqueue(earlierLogin);
+      opRepo._enqueue(earlierCreate);
+
+      const batch = opRepo._getNextOps(Infinity);
+      expect(batch?.map((item) => item.operation)).toEqual([earlierLogin, earlierCreate]);
+      await opRepo._executeOperations(batch!);
+
+      expect(queued()).toHaveLength(1);
+      expect(queued()[0]).not.toBe(earlierCreate);
+      expectCreateFor(queued()[0], subscriptionId);
+    });
+
+    test('a rejected login of a local current user does not enqueue its transfer again as a create', async () => {
+      vi.spyOn(Log, '_error').mockImplementation(() => undefined);
+      useLoginExecutor(() => Promise.resolve({ _result: ExecutionResult._FailNoretry }));
+      const currentId = IDManager._createLocalId();
+      const subscriptionId = IDManager._createLocalId();
+      setCurrentUser(currentId, EXTERNAL_ID);
+      addEmailModel(subscriptionId);
+      opRepo._enqueue(login(currentId, EXTERNAL_ID));
+      opRepo._enqueue(
+        new TransferSubscriptionOperation({
+          appId: APP_ID,
+          onesignalId: currentId,
+          externalId: EXTERNAL_ID,
+          subscriptionId,
+        }),
+      );
+
+      await executeOps(opRepo);
+
+      expect(queued()).toEqual([]);
+    });
+
+    test('a create of the current user that the server rejects is not enqueued again', async () => {
+      vi.spyOn(Log, '_error').mockImplementation(() => undefined);
+      opRepo = new OperationRepo(
+        [
+          {
+            _operations: ['create-subscription'],
+            _execute: () => Promise.resolve({ _result: ExecutionResult._FailNoretry }),
+          },
+        ],
+        mockOperationModelStore,
+        new NewRecordsState(),
+        jwtTokenStore,
+        identityModelStore,
+        subscriptionModelStore,
+      );
+      const subscriptionId = IDManager._createLocalId();
+      setCurrentUser(ONESIGNAL_ID, EXTERNAL_ID);
+      addEmailModel(subscriptionId);
+      opRepo._enqueue(emailCreate(ONESIGNAL_ID, subscriptionId, EXTERNAL_ID));
+
+      await executeOps(opRepo);
+
+      expect(queued()).toEqual([]);
+    });
 
     test('a dropped login keeps a subscription operation of the current user that is queued after the request starts', async () => {
       const localId = IDManager._createLocalId();
