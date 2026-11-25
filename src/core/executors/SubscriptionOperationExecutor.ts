@@ -1,6 +1,7 @@
 import { ExecutionResult, type IOperationExecutor } from 'src/core/types/operation';
 import type { IRebuildUserService } from 'src/core/types/user';
 import { getResponseStatusType, ResponseStatusType } from 'src/shared/helpers/network';
+import { isPushSubscriptionType } from 'src/shared/helpers/subscription';
 import Log from 'src/shared/libraries/Log';
 import { checkAndTriggerSubscriptionChanged } from 'src/shared/listeners';
 
@@ -125,7 +126,9 @@ export class SubscriptionOperationExecutor implements IOperationExecutor {
           createOperation._onesignalId,
           ModelChangeTags._Hydrate,
         );
-        checkAndTriggerSubscriptionChanged().catch(Log._error);
+        if (isPushSubscriptionType(createOperation.type)) {
+          checkAndTriggerSubscriptionChanged().catch(Log._error);
+        }
       }
 
       return {

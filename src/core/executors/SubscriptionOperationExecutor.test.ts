@@ -57,6 +57,12 @@ const BACKEND_SUBSCRIPTION_ID = 'backend-subscription-id';
 
 vi.mock('src/shared/libraries/Log');
 
+const subscriptionCheckFn = vi.hoisted(() => vi.fn(() => Promise.resolve()));
+vi.mock('src/shared/listeners', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('src/shared/listeners')>()),
+  checkAndTriggerSubscriptionChanged: subscriptionCheckFn,
+}));
+
 describe('SubscriptionOperationExecutor', () => {
   beforeAll(() => {
     TestEnvironment.initialize();
@@ -171,6 +177,29 @@ describe('SubscriptionOperationExecutor', () => {
       const subscriptionModel =
         subscriptionModelStore._getBySubscriptionId(BACKEND_SUBSCRIPTION_ID);
       expect(subscriptionModel).toBeDefined();
+    });
+
+    test('should check the push subscription only after a push create', async () => {
+      setCreateSubscriptionResponse({ response: { id: BACKEND_SUBSCRIPTION_ID } });
+      const executor = getExecutor();
+      const createOp = (type: CreateSubscriptionOperation['type'], token: string) =>
+        new CreateSubscriptionOperation({
+          appId: APP_ID,
+          onesignalId: ONESIGNAL_ID,
+          subscriptionId: SUB_ID,
+          type,
+          token,
+          enabled: true,
+          notification_types: NotificationType._Subscribed,
+        });
+      subscriptionCheckFn.mockClear();
+
+      await executor._execute([createOp(SubscriptionType._Email, 'test@example.com')]);
+      await executor._execute([createOp(SubscriptionType._SMS, '+15555550100')]);
+      expect(subscriptionCheckFn).not.toHaveBeenCalled();
+
+      await executor._execute([createOp(SubscriptionType._ChromePush, 'test-token')]);
+      expect(subscriptionCheckFn).toHaveBeenCalledTimes(1);
     });
 
     test('should handle create with update operations', async () => {
