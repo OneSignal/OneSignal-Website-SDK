@@ -73,7 +73,11 @@ export const getOneSignalApiUrl = ({
       : new URL(`http://${API_ORIGIN}:${API_URL_PORT}/api/v1/`);
   }
 
-  if (API_TYPE === 'staging') return new URL(`https://${API_ORIGIN}/api/v1/`);
+  if (API_TYPE === 'staging') {
+    // api.* hosts serve the current API at the root, like production.
+    const versioned = legacy || !API_ORIGIN.startsWith('api.');
+    return new URL(`https://${API_ORIGIN}/${versioned ? 'api/v1/' : ''}`);
+  }
 
   if (API_TYPE === 'production')
     return new URL(legacy ? 'https://onesignal.com/api/v1/' : 'https://api.onesignal.com/');
