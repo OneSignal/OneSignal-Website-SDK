@@ -1,27 +1,26 @@
-import { describe, expect, test, vi } from 'vite-plus/test';
+import { APP_ID } from '__test__/constants';
+import { nock } from '__test__/support/helpers/general';
+import { describe, expect, test } from 'vite-plus/test';
 
-const { mockJsonp } = vi.hoisted(() => ({
-  mockJsonp: vi.fn(),
-}));
+import { downloadServerAppConfig } from './page';
 
-vi.mock('jsonp', () => ({ default: mockJsonp }));
+describe('downloadServerAppConfig', () => {
+  test('resolves with the config on success', async () => {
+    const fetchSpy = nock({ success: true, app_id: APP_ID });
 
-describe('jsonpLib', () => {
-  test('passes explicit options to prevent prototype pollution', async () => {
-    vi.resetModules();
-    const { jsonpLib } = await import('./page');
-
-    const fn = vi.fn();
-    jsonpLib('https://example.com', fn);
-
-    expect(mockJsonp).toHaveBeenCalledWith(
-      'https://example.com',
-      expect.objectContaining({
-        prefix: '__jp',
-        param: 'callback',
-        timeout: 60000,
-      }),
-      fn,
+    await expect(downloadServerAppConfig(APP_ID)).resolves.toEqual({
+      success: true,
+      app_id: APP_ID,
+    });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      expect.stringContaining(`sync/${APP_ID}/web`),
+      expect.objectContaining({ method: 'GET' }),
     );
+  });
+
+  test('rejects with the response body when success is false', async () => {
+    nock({ success: false, code: 2 });
+
+    await expect(downloadServerAppConfig(APP_ID)).rejects.toEqual({ success: false, code: 2 });
   });
 });
